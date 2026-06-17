@@ -1,7 +1,7 @@
 # KẾ HOẠCH LÀM VIỆC NHÓM - DỰ ÁN CARWASH (2 Thành viên)
 
 ## 1. Phân công nhiệm vụ
-* **Thịnh :** Khởi tạo dự án, setup Git, thiết kế Database và code Backend (Java Servlet, Model, DAO).
+* **Thịnh:** Khởi tạo dự án, setup Git, thiết kế Database và code Backend (Java Servlet, Model, DAO).
 * **Tiến:** Code giao diện Frontend (JSP, HTML/CSS, Bootstrap), ráp giao diện với Backend và viết báo cáo tổng kết.
 
 ## 2. Tiến độ dự kiến (Timeline)
