@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getUser, clearAuth, type AuthUser } from "@/lib/auth";
+import Logo from "@/components/Logo";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -28,7 +29,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-cyan-50">
       <header className="bg-white shadow-sm">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <span className="text-xl font-bold text-cyan-600">🚿 AutoWash Pro</span>
+          <Logo className="text-xl text-cyan-600" size={22} />
           <button
             onClick={handleLogout}
             className="text-sm text-slate-600 hover:text-red-500 transition"

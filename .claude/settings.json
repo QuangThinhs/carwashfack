@@ -3,7 +3,12 @@
     "allow": [
       "Bash(timeout 300 mvn -q -DskipTests compile)",
       "Bash(timeout 300 npm install --no-audit --no-fund)",
-      "Bash(timeout 240 npm run build)"
+      "Bash(timeout 240 npm run build)",
+      "Bash(timeout 90 '/c/Program Files/Google/Chrome/Application/chrome.exe' --headless=new --disable-gpu --no-pdf-header-footer --user-data-dir=/c/Users/VIETHOANG/AppData/Local/Temp/chrome_pdf_profile '--print-to-pdf=C:\\\\Users\\\\VIETHOANG\\\\Desktop\\\\BAO_CAO_TIEN_DO_AutoWashPro.pdf' file:///C:/Users/VIETHOANG/AppData/Local/Temp/autowash_report.html)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\VIETHOANG\\Desktop",
+      "C:\\Users\\VIETHOANG\\AppData\\Local\\Temp"
     ]
   }
 }
