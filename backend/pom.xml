@@ -88,8 +88,8 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <!-- Cho phep ByteBuddy/Hibernate chay tren JDK moi (vd JDK 26) -->
-                    <jvmArguments>-Dnet.bytebuddy.experimental=true</jvmArguments>
+                    <!-- ByteBuddy/Hibernate chay tren JDK moi (JDK 26) + tat canh bao native access cua Tomcat -->
+                    <jvmArguments>-Dnet.bytebuddy.experimental=true --enable-native-access=ALL-UNNAMED</jvmArguments>
                 </configuration>
             </plugin>
         </plugins>

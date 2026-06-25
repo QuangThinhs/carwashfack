@@ -13,11 +13,12 @@ import {
   Crown,
 } from "lucide-react";
 import { getUser, type AuthUser } from "@/lib/auth";
+import { getVehicles } from "@/services/vehicle";
 import CustomerTopbar from "@/components/CustomerTopbar";
 
 const features = [
-  { Icon: CalendarClock, title: "Đặt lịch rửa xe", desc: "Chọn dịch vụ & khung giờ phù hợp với bạn.", href: null },
-  { Icon: Bike, title: "Xe của tôi", desc: "Quản lý danh sách xe máy đã đăng ký.", href: null },
+  { Icon: CalendarClock, title: "Đặt lịch rửa xe", desc: "Chọn dịch vụ & khung giờ phù hợp với bạn.", href: "/dashboard/bookings" },
+  { Icon: Bike, title: "Xe của tôi", desc: "Quản lý danh sách xe máy đã đăng ký.", href: "/dashboard/vehicles" },
   { Icon: History, title: "Lịch sử rửa xe", desc: "Xem lại các lần rửa đã thực hiện.", href: null },
   { Icon: Gift, title: "Điểm thưởng", desc: "Theo dõi & đổi điểm lấy ưu đãi.", href: null },
   { Icon: Ticket, title: "Ưu đãi", desc: "Khuyến mãi dành riêng cho hạng của bạn.", href: null },
@@ -27,6 +28,7 @@ const features = [
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [vehicleCount, setVehicleCount] = useState(0);
 
   useEffect(() => {
     const u = getUser();
@@ -35,6 +37,9 @@ export default function DashboardPage() {
       return;
     }
     setUser(u);
+    getVehicles()
+      .then((list) => setVehicleCount(list.length))
+      .catch(() => setVehicleCount(0));
   }, [router]);
 
   if (!user) return null;
@@ -59,7 +64,7 @@ export default function DashboardPage() {
               </div>
               <div className="rounded-xl bg-slate-50 p-4">
                 <p className="text-sm text-slate-500">Xe đã đăng ký</p>
-                <p className="font-semibold text-slate-800">0</p>
+                <p className="font-semibold text-slate-800">{vehicleCount}</p>
               </div>
               <div className="rounded-xl bg-slate-50 p-4">
                 <p className="text-sm text-slate-500">Lượt rửa</p>
