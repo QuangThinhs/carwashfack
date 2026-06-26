@@ -1,68 +1,86 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { LogOut, ShieldCheck } from "lucide-react";
-import { getUser, clearAuth, type AuthUser } from "@/lib/auth";
-import Logo from "@/components/Logo";
+import { Users, CalendarClock, Droplets, Wallet, Clock } from "lucide-react";
+import AdminShell from "@/components/AdminShell";
+import { getOverview, type AdminOverview } from "@/services/admin";
+import { BOOKING_STATUS, fmtPrice, fmtTime } from "@/services/booking";
 
-export default function AdminPage() {
-  const router = useRouter();
-  const [user, setUser] = useState<AuthUser | null>(null);
+export default function AdminOverviewPage() {
+  const [data, setData] = useState<AdminOverview | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const u = getUser();
-    if (!u || (u.role !== "ADMIN" && u.role !== "STAFF")) {
-      router.replace("/admin/login");
-      return;
-    }
-    setUser(u);
-  }, [router]);
+    getOverview()
+      .then(setData)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
-  function handleLogout() {
-    if (!confirm("Đăng xuất khỏi trang quản trị?")) return;
-    clearAuth();
-    router.push("/admin/login");
-  }
-
-  if (!user) return null;
+  const stats = [
+    { label: "Tổng khách hàng", value: data?.totalCustomers ?? 0, Icon: Users, color: "text-cyan-400 bg-cyan-500/10" },
+    { label: "Tổng lượt đặt", value: data?.totalBookings ?? 0, Icon: CalendarClock, color: "text-indigo-400 bg-indigo-500/10" },
+    { label: "Rửa hoàn tất", value: data?.completedWashes ?? 0, Icon: Droplets, color: "text-green-400 bg-green-500/10" },
+    { label: "Doanh thu", value: fmtPrice(data?.revenue ?? 0), Icon: Wallet, color: "text-amber-400 bg-amber-500/10" },
+  ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <header className="sticky top-0 z-40 bg-slate-900/80 backdrop-blur border-b border-white/10">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-white">
-            <Logo className="text-xl" size={22} />
-            <span className="text-[11px] font-semibold tracking-widest uppercase text-cyan-400 border border-cyan-500/20 bg-cyan-500/10 rounded-full px-2.5 py-0.5">
-              Admin
-            </span>
+    <AdminShell active="overview" title="Tổng quan">
+      {/* The so lieu */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((s) => (
+          <div key={s.label} className="bg-slate-900 border border-white/10 rounded-2xl p-5">
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${s.color}`}>
+              <s.Icon size={22} />
+            </div>
+            <p className="text-2xl font-bold text-white mt-3">{s.value}</p>
+            <p className="text-sm text-slate-400 mt-0.5">{s.label}</p>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-slate-400 hidden sm:inline">
-              Xin chào, <b className="text-white">{user.fullName}</b>
-            </span>
-            <button
-              onClick={handleLogout}
-              className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-red-400 transition"
-            >
-              <LogOut size={16} /> Đăng xuất
-            </button>
-          </div>
-        </div>
-      </header>
+        ))}
+      </div>
 
-      <main className="max-w-6xl mx-auto px-6 py-12">
-        <div className="bg-slate-900 border border-white/10 rounded-2xl p-10 text-center">
-          <div className="mx-auto w-16 h-16 rounded-2xl bg-cyan-500/10 flex items-center justify-center">
-            <ShieldCheck size={32} className="text-cyan-400" />
-          </div>
-          <h1 className="text-2xl font-bold text-white mt-4">Trang quản trị AutoWash Pro</h1>
-          <p className="text-slate-400 mt-2 max-w-md mx-auto">
-            Đăng nhập quản trị thành công. Các chức năng quản lý (lịch đặt, dịch vụ, khuyến mãi,
-            thống kê...) sẽ được phát triển ở bước tiếp theo.
-          </p>
+      {/* Lich dat gan day */}
+      <div className="mt-6 bg-slate-900 border border-white/10 rounded-2xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
+          <h2 className="font-semibold text-white">Lịch đặt gần đây</h2>
+          {data && data.pendingBookings > 0 && (
+            <span className="text-xs bg-amber-500/15 text-amber-300 rounded-full px-2.5 py-1">
+              {data.pendingBookings} chờ xác nhận
+            </span>
+          )}
         </div>
-      </main>
-    </div>
+
+        {loading ? (
+          <p className="p-5 text-slate-500">Đang tải...</p>
+        ) : !data || data.recentBookings.length === 0 ? (
+          <p className="p-5 text-slate-500">Chưa có lịch đặt nào.</p>
+        ) : (
+          <div className="divide-y divide-white/5">
+            {data.recentBookings.map((b) => {
+              const st = BOOKING_STATUS[b.status] ?? { label: b.status, cls: "bg-slate-500/15 text-slate-400" };
+              return (
+                <div key={b.id} className="px-5 py-3.5 flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-white">{b.customerName}</span>
+                      <span className={`text-[11px] font-semibold rounded-full px-2 py-0.5 ${st.cls}`}>
+                        {st.label}
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                      {b.serviceName} · {b.vehiclePlate}
+                      <span className="inline-flex items-center gap-1 text-slate-500">
+                        <Clock size={12} /> {fmtTime(b.scheduledTime)}
+                      </span>
+                    </p>
+                  </div>
+                  <span className="font-semibold text-cyan-400 shrink-0">{fmtPrice(b.price)}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </AdminShell>
   );
 }
