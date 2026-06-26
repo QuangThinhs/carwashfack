@@ -1,13 +1,18 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   CalendarClock,
   Gift,
   Crown,
   History,
   Clock,
-  Bike,
   Sparkles,
+  ShieldCheck,
+  Star,
+  Check,
 } from "lucide-react";
+import posterOrange from "@/images/poster2.jpg";
+import posterGrid from "@/images/poster.webp";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 
@@ -20,9 +25,9 @@ const stats = [
 
 const features = [
   { Icon: CalendarClock, title: "Đặt lịch trước", desc: "Chọn giờ rửa xe online, không phải xếp hàng chờ đợi." },
-  { Icon: Gift, title: "Tích điểm đổi quà", desc: "Mỗi lần rửa được tích điểm, đổi lấy giảm giá hoặc rửa miễn phí." },
-  { Icon: Crown, title: "Hạng thành viên", desc: "Lên hạng để mở khóa ưu đãi và quyền đặt lịch sớm hơn." },
-  { Icon: History, title: "Lịch sử minh bạch", desc: "Xem lại toàn bộ lịch sử rửa xe và điểm thưởng bất cứ lúc nào." },
+  { Icon: Gift, title: "Tích điểm đổi quà", desc: "Mỗi lần rửa được tích điểm, đổi lấy giảm giá & ưu đãi." },
+  { Icon: Crown, title: "Hạng thành viên", desc: "Lên hạng để mở khóa ưu đãi và đặt lịch sớm hơn." },
+  { Icon: History, title: "Lịch sử minh bạch", desc: "Theo dõi toàn bộ lịch sử rửa xe và điểm thưởng." },
 ];
 
 const services = [
@@ -33,7 +38,7 @@ const services = [
 ];
 
 const tiers = [
-  { name: "Member", days: 7, color: "from-slate-400 to-slate-500", perk: "Tích điểm cơ bản" },
+  { name: "Member", days: 7, color: "from-slate-500 to-slate-600", perk: "Tích điểm cơ bản" },
   { name: "Silver", days: 10, color: "from-slate-300 to-slate-400", perk: "Giảm 5% dịch vụ thêm" },
   { name: "Gold", days: 12, color: "from-amber-400 to-yellow-500", perk: "Giảm 10%, ưu tiên hàng đợi" },
   { name: "Platinum", days: 14, color: "from-cyan-400 to-sky-500", perk: "Giảm 15%, 1 lần rửa miễn phí/tháng" },
@@ -45,135 +50,197 @@ const steps = [
   { num: "3", title: "Tích điểm & lên hạng", desc: "Mỗi lần rửa nhận điểm, đổi ưu đãi và thăng hạng." },
 ];
 
+function SectionHeading({ eyebrow, title, left = false }: { eyebrow: string; title: string; left?: boolean }) {
+  return (
+    <div className={left ? "" : "text-center"}>
+      <span className="text-xs font-semibold tracking-[0.2em] uppercase text-cyan-400">{eyebrow}</span>
+      <h2 className="mt-2 text-3xl md:text-4xl font-bold tracking-tight text-white">{title}</h2>
+    </div>
+  );
+}
+
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="bg-slate-950 text-white">
       <SiteHeader />
 
       {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-cyan-500 via-sky-500 to-blue-600 text-white">
-        <div className="max-w-6xl mx-auto px-6 py-20 md:py-28 grid md:grid-cols-2 gap-10 items-center">
+      <section className="relative overflow-hidden py-16 md:py-24">
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full bg-cyan-500/10 blur-3xl" />
+          <div className="absolute top-10 right-0 w-[420px] h-[420px] rounded-full bg-orange-500/10 blur-3xl" />
+        </div>
+
+        <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
           <div>
-            <span className="inline-flex items-center gap-2 bg-white/15 rounded-full px-4 py-1.5 text-sm font-medium mb-5">
-              <Sparkles size={16} /> Rửa xe máy thông minh
+            <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.2em] uppercase text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-4 py-1.5">
+              <Sparkles size={14} /> AutoWash Pro
             </span>
-            <h1 className="text-4xl md:text-5xl font-bold leading-tight">
-              Đặt lịch trước,
-              <br /> tích điểm thả ga.
+            <h1 className="mt-6 text-4xl md:text-6xl font-bold leading-[1.05] tracking-tight">
+              Rửa xe máy,
+              <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-300">
+                đẳng cấp chuyên nghiệp.
+              </span>
             </h1>
-            <p className="mt-5 text-white/85 text-lg max-w-md">
-              AutoWash Pro giúp bạn rửa xe nhanh chóng, tích điểm sau mỗi lần ghé và nhận ưu đãi
-              theo hạng thành viên.
+            <p className="mt-6 text-lg text-slate-400 max-w-md">
+              Đặt lịch trước, tích điểm sau mỗi lần rửa và tận hưởng dịch vụ chăm sóc xe tỉ mỉ —
+              chuẩn mực như dành cho siêu xe.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <Link
                 href="/register"
-                className="rounded-lg bg-white text-cyan-600 font-semibold px-6 py-3 hover:bg-white/90 transition"
+                className="rounded-lg bg-cyan-500 text-white font-semibold px-6 py-3 hover:bg-cyan-400 transition"
               >
                 Bắt đầu ngay
               </Link>
               <a
                 href="#services"
-                className="rounded-lg border border-white/70 font-semibold px-6 py-3 hover:bg-white/10 transition"
+                className="rounded-lg border border-white/20 text-white font-semibold px-6 py-3 hover:bg-white/10 transition"
               >
                 Xem dịch vụ
               </a>
             </div>
+            <div className="mt-10 flex flex-wrap items-center gap-6 text-sm text-slate-400">
+              <span className="flex items-center gap-2">
+                <ShieldCheck size={16} className="text-cyan-400" /> Đặt lịch online
+              </span>
+              <span className="flex items-center gap-2">
+                <Star size={16} className="text-cyan-400" /> Tích điểm đổi quà
+              </span>
+            </div>
           </div>
-          <div className="hidden md:flex justify-center">
-            <Bike size={200} strokeWidth={1.25} className="text-white/90 drop-shadow-2xl" />
+
+          {/* Hero image */}
+          <div className="relative">
+            <div className="absolute -inset-4 bg-gradient-to-tr from-cyan-500/20 to-orange-500/20 blur-2xl rounded-3xl -z-10" />
+            <Image
+              src={posterOrange}
+              alt="AutoWash Pro — chăm sóc xe cao cấp"
+              placeholder="blur"
+              priority
+              className="w-full h-auto rounded-2xl shadow-2xl shadow-black/60 ring-1 ring-white/10"
+            />
           </div>
         </div>
       </section>
 
       {/* Stats */}
-      <section className="bg-white border-b border-slate-100">
-        <div className="max-w-6xl mx-auto px-6 py-8 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+      <section className="border-y border-white/10 bg-white/[0.02]">
+        <div className="max-w-6xl mx-auto px-6 py-10 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           {stats.map((s) => (
             <div key={s.l}>
-              <div className="text-3xl font-bold text-cyan-600">{s.n}</div>
-              <div className="text-sm text-slate-500 mt-1">{s.l}</div>
+              <div className="text-3xl font-bold text-white">{s.n}</div>
+              <div className="text-sm text-slate-400 mt-1">{s.l}</div>
             </div>
           ))}
         </div>
       </section>
 
       {/* Features */}
-      <section className="max-w-6xl mx-auto px-6 py-16">
-        <h2 className="text-3xl font-bold text-center text-slate-800">Vì sao chọn AutoWash Pro?</h2>
-        <p className="text-center text-slate-500 mt-2">
-          Trải nghiệm rửa xe hiện đại, tiện lợi và nhiều ưu đãi.
-        </p>
-        <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <section className="max-w-6xl mx-auto px-6 py-20">
+        <SectionHeading eyebrow="Vì sao chọn chúng tôi" title="Trải nghiệm chăm sóc xe khác biệt" />
+        <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {features.map((f) => (
             <div
               key={f.title}
-              className="rounded-2xl border border-slate-200 p-6 hover:shadow-lg hover:-translate-y-1 transition"
+              className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 hover:bg-white/[0.06] hover:-translate-y-1 transition"
             >
-              <div className="w-12 h-12 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center">
-                <f.Icon size={26} strokeWidth={1.9} />
+              <div className="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center">
+                <f.Icon size={24} strokeWidth={1.9} />
               </div>
-              <h3 className="mt-4 font-semibold text-lg text-slate-800">{f.title}</h3>
-              <p className="mt-2 text-sm text-slate-500">{f.desc}</p>
+              <h3 className="mt-4 font-semibold text-lg">{f.title}</h3>
+              <p className="mt-2 text-sm text-slate-400">{f.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Services */}
-      <section id="services" className="bg-slate-50">
-        <div className="max-w-6xl mx-auto px-6 py-16">
-          <h2 className="text-3xl font-bold text-center text-slate-800">Bảng dịch vụ</h2>
-          <p className="text-center text-slate-500 mt-2">Các gói rửa xe &amp; dịch vụ thêm.</p>
-          <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {services.map((s) => (
-              <div
-                key={s.name}
-                className={`relative rounded-2xl bg-white p-6 border ${
-                  s.popular ? "border-cyan-500 shadow-lg" : "border-slate-200"
-                }`}
-              >
-                {s.popular && (
-                  <span className="absolute -top-3 left-6 bg-cyan-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                    Phổ biến
+      {/* Showcase */}
+      <section className="border-y border-white/10 bg-white/[0.02]">
+        <div className="max-w-6xl mx-auto px-6 py-20 grid lg:grid-cols-2 gap-12 items-center">
+          <div className="order-2 lg:order-1 relative">
+            <div className="absolute -inset-4 bg-cyan-500/10 blur-2xl rounded-3xl -z-10" />
+            <Image
+              src={posterGrid}
+              alt="Bộ sưu tập chăm sóc xe"
+              placeholder="blur"
+              className="w-full h-auto rounded-2xl ring-1 ring-white/10 shadow-2xl shadow-black/60"
+            />
+          </div>
+          <div className="order-1 lg:order-2">
+            <SectionHeading eyebrow="Chuẩn mực" title="Tỉ mỉ đến từng chi tiết" left />
+            <p className="mt-4 text-slate-400">
+              Chúng tôi chăm sóc chiếc xe của bạn với sự tỉ mỉ và đam mê như dành cho những mẫu xe
+              biểu tượng. Mỗi lần rửa là một lần chiếc xe của bạn được "tân trang".
+            </p>
+            <ul className="mt-6 space-y-3">
+              {[
+                "Quy trình rửa nhiều bước chuẩn hoá",
+                "Sản phẩm chăm sóc cao cấp",
+                "Đội ngũ tận tâm, đúng giờ",
+              ].map((t) => (
+                <li key={t} className="flex items-center gap-3 text-slate-300">
+                  <span className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
+                    <Check size={12} strokeWidth={3} />
                   </span>
-                )}
-                <h3 className="font-semibold text-lg text-slate-800">{s.name}</h3>
-                <div className="mt-3 text-2xl font-bold text-cyan-600">{s.price}</div>
-                <div className="flex items-center gap-1.5 text-sm text-slate-400 mt-1">
-                  <Clock size={15} /> {s.time}
-                </div>
-                <Link
-                  href="/register"
-                  className="mt-5 block text-center rounded-lg bg-slate-100 hover:bg-cyan-500 hover:text-white text-slate-700 font-medium py-2 transition"
-                >
-                  Đặt lịch
-                </Link>
-              </div>
-            ))}
+                  {t}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>
 
+      {/* Services */}
+      <section id="services" className="max-w-6xl mx-auto px-6 py-20">
+        <SectionHeading eyebrow="Bảng giá" title="Dịch vụ & gói rửa" />
+        <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {services.map((s) => (
+            <div
+              key={s.name}
+              className={`relative rounded-2xl border p-6 ${
+                s.popular ? "border-cyan-500/50 bg-cyan-500/[0.06]" : "border-white/10 bg-white/[0.03]"
+              }`}
+            >
+              {s.popular && (
+                <span className="absolute -top-3 left-6 bg-cyan-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                  Phổ biến
+                </span>
+              )}
+              <h3 className="font-semibold text-lg">{s.name}</h3>
+              <div className="mt-3 text-2xl font-bold text-cyan-400">{s.price}</div>
+              <div className="flex items-center gap-1.5 text-sm text-slate-400 mt-1">
+                <Clock size={15} /> {s.time}
+              </div>
+              <Link
+                href="/register"
+                className="mt-5 block text-center rounded-lg bg-white/5 border border-white/10 hover:bg-cyan-500 hover:border-cyan-500 text-white font-medium py-2 transition"
+              >
+                Đặt lịch
+              </Link>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Tiers */}
-      <section id="tiers" className="max-w-6xl mx-auto px-6 py-16">
-        <h2 className="text-3xl font-bold text-center text-slate-800">Hạng thành viên</h2>
-        <p className="text-center text-slate-500 mt-2">
-          Hạng càng cao, đặt lịch càng sớm &amp; ưu đãi càng nhiều.
-        </p>
-        <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <section id="tiers" className="max-w-6xl mx-auto px-6 py-20">
+        <SectionHeading eyebrow="Khách hàng thân thiết" title="Hạng thành viên" />
+        <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {tiers.map((t) => (
-            <div key={t.name} className="rounded-2xl border border-slate-200 overflow-hidden">
+            <div key={t.name} className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden">
               <div className={`bg-gradient-to-br ${t.color} text-white p-6`}>
-                <div className="text-sm uppercase tracking-wide opacity-90">Hạng</div>
+                <div className="text-xs uppercase tracking-[0.2em] opacity-90">Hạng</div>
                 <div className="text-2xl font-bold">{t.name}</div>
               </div>
               <div className="p-6">
-                <div className="text-sm text-slate-500">Đặt lịch trước</div>
-                <div className="text-3xl font-bold text-slate-800">
-                  {t.days} <span className="text-base font-medium text-slate-500">ngày</span>
+                <div className="text-sm text-slate-400">Đặt lịch trước</div>
+                <div className="text-3xl font-bold text-white">
+                  {t.days}
+                  <span className="text-base font-medium text-slate-400"> ngày</span>
                 </div>
-                <p className="mt-3 text-sm text-slate-600">{t.perk}</p>
+                <p className="mt-3 text-sm text-slate-400">{t.perk}</p>
               </div>
             </div>
           ))}
@@ -181,17 +248,17 @@ export default function Home() {
       </section>
 
       {/* How it works */}
-      <section id="how" className="bg-slate-50">
-        <div className="max-w-6xl mx-auto px-6 py-16">
-          <h2 className="text-3xl font-bold text-center text-slate-800">Cách hoạt động</h2>
-          <div className="mt-10 grid md:grid-cols-3 gap-8">
+      <section id="how" className="border-y border-white/10 bg-white/[0.02]">
+        <div className="max-w-6xl mx-auto px-6 py-20">
+          <SectionHeading eyebrow="Đơn giản" title="Cách hoạt động" />
+          <div className="mt-12 grid md:grid-cols-3 gap-8">
             {steps.map((s) => (
               <div key={s.num} className="text-center">
-                <div className="mx-auto w-14 h-14 rounded-full bg-gradient-to-br from-cyan-500 to-sky-600 text-white text-xl font-bold flex items-center justify-center">
+                <div className="mx-auto w-14 h-14 rounded-full bg-cyan-500 text-white text-xl font-bold flex items-center justify-center">
                   {s.num}
                 </div>
-                <h3 className="mt-4 font-semibold text-lg text-slate-800">{s.title}</h3>
-                <p className="mt-2 text-sm text-slate-500 max-w-xs mx-auto">{s.desc}</p>
+                <h3 className="mt-4 font-semibold text-lg">{s.title}</h3>
+                <p className="mt-2 text-sm text-slate-400 max-w-xs mx-auto">{s.desc}</p>
               </div>
             ))}
           </div>
@@ -199,12 +266,11 @@ export default function Home() {
       </section>
 
       {/* CTA */}
-      <section className="bg-gradient-to-r from-cyan-500 to-sky-600 text-white">
-        <div className="max-w-4xl mx-auto px-6 py-16 text-center">
-          <h2 className="text-3xl font-bold">Sẵn sàng trải nghiệm?</h2>
-          <p className="mt-3 text-white/85">
-            Đăng ký ngay hôm nay để bắt đầu tích điểm và nhận ưu đãi.
-          </p>
+      <section className="max-w-6xl mx-auto px-6 py-20">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-cyan-600 to-sky-600 p-12 text-center">
+          <div className="absolute -top-16 -right-10 w-60 h-60 rounded-full bg-white/10 blur-2xl" />
+          <h2 className="text-3xl md:text-4xl font-bold">Sẵn sàng cho chiếc xe sạch bóng?</h2>
+          <p className="mt-3 text-white/85">Đăng ký miễn phí hôm nay để đặt lịch và bắt đầu tích điểm.</p>
           <Link
             href="/register"
             className="inline-block mt-7 rounded-lg bg-white text-cyan-600 font-semibold px-8 py-3 hover:bg-white/90 transition"
