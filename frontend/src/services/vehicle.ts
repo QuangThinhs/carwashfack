@@ -3,12 +3,14 @@ import { api } from "./api";
 export interface Vehicle {
   id: number;
   licensePlate: string;
+  category: string | null;
   type: string | null;
   brand: string | null;
 }
 
 export interface VehiclePayload {
   licensePlate: string;
+  category?: string;
   type?: string;
   brand?: string;
 }

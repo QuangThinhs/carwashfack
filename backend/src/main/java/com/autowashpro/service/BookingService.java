@@ -46,17 +46,17 @@ public class BookingService {
         Customer customer = currentCustomer(username);
 
         Vehicle vehicle = vehicleRepository.findByIdAndCustomerId(req.getVehicleId(), customer.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Xe khong hop le"));
+                .orElseThrow(() -> new IllegalArgumentException("Xe không hợp lệ"));
         ServiceItem service = serviceItemRepository.findById(req.getServiceId())
-                .orElseThrow(() -> new IllegalArgumentException("Dich vu khong hop le"));
+                .orElseThrow(() -> new IllegalArgumentException("Dịch vụ không hợp lệ"));
 
         LocalDateTime time = req.getScheduledTime();
         LocalDateTime now = LocalDateTime.now();
         if (time.isBefore(now)) {
-            throw new IllegalArgumentException("Thoi gian dat lich phai o tuong lai");
+            throw new IllegalArgumentException("Thời gian đặt lịch phải ở tương lai");
         }
         if (time.isAfter(now.plusDays(MEMBER_WINDOW_DAYS))) {
-            throw new IllegalArgumentException("Chi duoc dat truoc toi da " + MEMBER_WINDOW_DAYS + " ngay (hang Member)");
+            throw new IllegalArgumentException("Chỉ được đặt trước tối đa " + MEMBER_WINDOW_DAYS + " ngày (hạng Member)");
         }
 
         Booking booking = new Booking();
@@ -84,9 +84,9 @@ public class BookingService {
     public BookingResponse complete(String username, Long id) {
         Customer customer = currentCustomer(username);
         Booking booking = bookingRepository.findByIdAndCustomerId(id, customer.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay lich dat"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy lịch đặt"));
         if (booking.getStatus() == BookingStatus.DONE || booking.getStatus() == BookingStatus.CANCELLED) {
-            throw new IllegalArgumentException("Lich nay da ket thuc");
+            throw new IllegalArgumentException("Lịch này đã kết thúc");
         }
         booking.setStatus(BookingStatus.DONE);
         bookingRepository.save(booking);
@@ -99,9 +99,9 @@ public class BookingService {
     public BookingResponse cancel(String username, Long id) {
         Customer customer = currentCustomer(username);
         Booking booking = bookingRepository.findByIdAndCustomerId(id, customer.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay lich dat"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy lịch đặt"));
         if (booking.getStatus() != BookingStatus.PENDING && booking.getStatus() != BookingStatus.CONFIRMED) {
-            throw new IllegalArgumentException("Khong the huy lich o trang thai nay");
+            throw new IllegalArgumentException("Không thể huỷ lịch ở trạng thái này");
         }
         booking.setStatus(BookingStatus.CANCELLED);
         bookingRepository.save(booking);
@@ -110,7 +110,7 @@ public class BookingService {
 
     private Customer currentCustomer(String username) {
         return customerRepository.findByUserUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay khach hang"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy khách hàng"));
     }
 
     private BookingResponse toResponse(Booking b) {

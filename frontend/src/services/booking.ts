@@ -29,11 +29,11 @@ export interface BookingPayload {
 export const ACTIVE_STATUSES = ["PENDING", "CONFIRMED", "IN_PROGRESS"];
 
 export const BOOKING_STATUS: Record<string, { label: string; cls: string }> = {
-  PENDING: { label: "Chờ xác nhận", cls: "bg-amber-50 text-amber-600" },
-  CONFIRMED: { label: "Đã xác nhận", cls: "bg-blue-50 text-blue-600" },
-  IN_PROGRESS: { label: "Đang rửa", cls: "bg-cyan-50 text-cyan-600" },
-  DONE: { label: "Hoàn tất", cls: "bg-green-50 text-green-600" },
-  CANCELLED: { label: "Đã huỷ", cls: "bg-slate-100 text-slate-500" },
+  PENDING: { label: "Chờ xác nhận", cls: "bg-amber-500/15 text-amber-300" },
+  CONFIRMED: { label: "Đã xác nhận", cls: "bg-blue-500/15 text-blue-300" },
+  IN_PROGRESS: { label: "Đang rửa", cls: "bg-cyan-500/15 text-cyan-300" },
+  DONE: { label: "Hoàn tất", cls: "bg-green-500/15 text-green-300" },
+  CANCELLED: { label: "Đã huỷ", cls: "bg-slate-500/15 text-slate-400" },
 };
 
 export const fmtPrice = (n: number) => n.toLocaleString("vi-VN") + "đ";

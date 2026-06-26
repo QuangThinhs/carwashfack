@@ -40,7 +40,7 @@ public class AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest req) {
         if (userRepository.existsByUsername(req.getPhone())) {
-            throw new IllegalArgumentException("So dien thoai da duoc dang ky");
+            throw new IllegalArgumentException("Số điện thoại đã được đăng ký");
         }
 
         User user = new User();
@@ -66,7 +66,7 @@ public class AuthService {
                 new UsernamePasswordAuthenticationToken(req.getPhone(), req.getPassword()));
 
         User user = userRepository.findByUsername(req.getPhone())
-                .orElseThrow(() -> new BadCredentialsException("Sai so dien thoai hoac mat khau"));
+                .orElseThrow(() -> new BadCredentialsException("Sai số điện thoại hoặc mật khẩu"));
         Customer customer = customerRepository.findByUserUsername(user.getUsername()).orElse(null);
 
         String token = jwtService.generateToken(user.getUsername());

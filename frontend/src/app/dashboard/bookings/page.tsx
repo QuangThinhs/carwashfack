@@ -21,6 +21,9 @@ import {
 } from "@/services/booking";
 import CustomerTopbar from "@/components/CustomerTopbar";
 
+const inputCls =
+  "w-full rounded-lg border border-white/10 bg-slate-800 px-4 py-2.5 text-white outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30";
+
 function toLocalInput(d: Date) {
   const pad = (x: number) => String(x).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -121,32 +124,32 @@ export default function BookingsPage() {
   const max = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-950 text-white">
       <CustomerTopbar user={user} />
 
       <main className="max-w-4xl mx-auto px-6 py-8">
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-cyan-600 transition mb-5"
+          className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-cyan-400 transition mb-5"
         >
           <ArrowLeft size={16} /> Quay lại
         </Link>
 
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">Đặt lịch rửa xe</h1>
-            <p className="text-slate-500 mt-1">Các lịch đang chờ &amp; đang xử lý của bạn.</p>
+            <h1 className="text-2xl font-bold text-white">Đặt lịch rửa xe</h1>
+            <p className="text-slate-400 mt-1">Các lịch đang chờ &amp; đang xử lý của bạn.</p>
           </div>
           <div className="flex items-center gap-3">
             <Link
               href="/dashboard/history"
-              className="hidden sm:inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-cyan-600 transition"
+              className="hidden sm:inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-cyan-400 transition"
             >
               <History size={16} /> Lịch sử
             </Link>
             <button
               onClick={openModal}
-              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-500 to-sky-600 text-white font-semibold px-4 py-2.5 hover:opacity-95 transition"
+              className="inline-flex items-center gap-2 rounded-lg bg-cyan-500 text-white font-semibold px-4 py-2.5 hover:bg-cyan-400 transition"
             >
               <Plus size={18} /> Đặt lịch
             </button>
@@ -154,24 +157,24 @@ export default function BookingsPage() {
         </div>
 
         {loading ? (
-          <p className="text-slate-400">Đang tải...</p>
+          <p className="text-slate-500">Đang tải...</p>
         ) : vehicles.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center">
-            <p className="text-slate-500">Bạn cần thêm xe trước khi đặt lịch.</p>
+          <div className="bg-slate-900/50 rounded-2xl border border-dashed border-white/15 p-12 text-center">
+            <p className="text-slate-400">Bạn cần thêm xe trước khi đặt lịch.</p>
             <Link
               href="/dashboard/vehicles"
-              className="mt-3 inline-block text-cyan-600 font-medium hover:underline"
+              className="mt-3 inline-block text-cyan-400 font-medium hover:underline"
             >
               → Thêm xe của tôi
             </Link>
           </div>
         ) : active.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center">
-            <CalendarClock size={40} strokeWidth={1.5} className="mx-auto text-slate-300" />
-            <p className="mt-3 text-slate-500">Bạn chưa có lịch nào đang chờ.</p>
+          <div className="bg-slate-900/50 rounded-2xl border border-dashed border-white/15 p-12 text-center">
+            <CalendarClock size={40} strokeWidth={1.5} className="mx-auto text-slate-600" />
+            <p className="mt-3 text-slate-400">Bạn chưa có lịch nào đang chờ.</p>
             <button
               onClick={openModal}
-              className="mt-4 inline-flex items-center gap-2 text-cyan-600 font-medium hover:underline"
+              className="mt-4 inline-flex items-center gap-2 text-cyan-400 font-medium hover:underline"
             >
               <Plus size={16} /> Đặt lịch mới
             </button>
@@ -179,36 +182,36 @@ export default function BookingsPage() {
         ) : (
           <div className="space-y-3">
             {active.map((b) => {
-              const st = BOOKING_STATUS[b.status] ?? { label: b.status, cls: "bg-slate-100 text-slate-500" };
+              const st = BOOKING_STATUS[b.status] ?? { label: b.status, cls: "bg-slate-500/15 text-slate-400" };
               return (
                 <div
                   key={b.id}
-                  className="bg-white rounded-2xl border border-slate-200 p-5 flex items-center justify-between gap-4"
+                  className="bg-slate-900 border border-white/10 rounded-2xl p-5 flex items-center justify-between gap-4"
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-semibold text-slate-800">{b.serviceName}</h3>
+                      <h3 className="font-semibold text-white">{b.serviceName}</h3>
                       <span className={`text-xs font-semibold rounded-full px-2.5 py-0.5 ${st.cls}`}>
                         {st.label}
                       </span>
                     </div>
-                    <p className="text-sm text-slate-500 mt-1 flex items-center gap-1.5">
+                    <p className="text-sm text-slate-400 mt-1 flex items-center gap-1.5">
                       <Clock size={14} /> {fmtTime(b.scheduledTime)} · {b.vehiclePlate}
                     </p>
-                    {b.note && <p className="text-sm text-slate-400 mt-1">Ghi chú: {b.note}</p>}
+                    {b.note && <p className="text-sm text-slate-500 mt-1">Ghi chú: {b.note}</p>}
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="font-bold text-cyan-600">{fmtPrice(b.price)}</p>
+                    <p className="font-bold text-cyan-400">{fmtPrice(b.price)}</p>
                     <div className="flex items-center gap-3 justify-end mt-1">
                       <button
                         onClick={() => handleComplete(b)}
-                        className="text-sm text-slate-500 hover:text-green-600 transition"
+                        className="text-sm text-slate-400 hover:text-green-400 transition"
                       >
                         Đã rửa xong
                       </button>
                       <button
                         onClick={() => handleCancel(b)}
-                        className="text-sm text-slate-400 hover:text-red-500 transition"
+                        className="text-sm text-slate-500 hover:text-red-400 transition"
                       >
                         Huỷ
                       </button>
@@ -224,33 +227,36 @@ export default function BookingsPage() {
       {/* Modal dat lich */}
       {open && (
         <div
-          className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
           onClick={() => setOpen(false)}
         >
-          <div className="bg-white rounded-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-md p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-slate-800">Đặt lịch rửa xe</h2>
-              <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-600">
+              <h2 className="text-lg font-bold text-white">Đặt lịch rửa xe</h2>
+              <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-white">
                 <X size={20} />
               </button>
             </div>
             <form onSubmit={handleSubmit}>
               {error && (
-                <div className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3">
+                <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-sm px-4 py-3">
                   {error}
                 </div>
               )}
 
               <label className="block mb-4">
-                <span className="block text-sm font-medium text-slate-700 mb-1.5">Chọn xe</span>
+                <span className="block text-sm font-medium text-slate-300 mb-1.5">Chọn xe</span>
                 <select
                   value={form.vehicleId}
                   onChange={(e) => setForm({ ...form, vehicleId: e.target.value })}
                   required
-                  className="w-full rounded-lg border border-slate-300 px-4 py-2.5 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30"
+                  className={inputCls}
                 >
                   {vehicles.map((v) => (
-                    <option key={v.id} value={v.id}>
+                    <option key={v.id} value={v.id} className="bg-slate-800">
                       {v.licensePlate}
                       {v.brand ? ` · ${v.brand}` : ""}
                     </option>
@@ -259,15 +265,15 @@ export default function BookingsPage() {
               </label>
 
               <label className="block mb-4">
-                <span className="block text-sm font-medium text-slate-700 mb-1.5">Dịch vụ</span>
+                <span className="block text-sm font-medium text-slate-300 mb-1.5">Dịch vụ</span>
                 <select
                   value={form.serviceId}
                   onChange={(e) => setForm({ ...form, serviceId: e.target.value })}
                   required
-                  className="w-full rounded-lg border border-slate-300 px-4 py-2.5 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30"
+                  className={inputCls}
                 >
                   {services.map((s) => (
-                    <option key={s.id} value={s.id}>
+                    <option key={s.id} value={s.id} className="bg-slate-800">
                       {s.name} — {fmtPrice(s.price)}
                     </option>
                   ))}
@@ -275,7 +281,7 @@ export default function BookingsPage() {
               </label>
 
               <label className="block mb-4">
-                <span className="block text-sm font-medium text-slate-700 mb-1.5">
+                <span className="block text-sm font-medium text-slate-300 mb-1.5">
                   Thời gian (đặt trước tối đa 7 ngày)
                 </span>
                 <input
@@ -285,17 +291,17 @@ export default function BookingsPage() {
                   max={toLocalInput(max)}
                   onChange={(e) => setForm({ ...form, scheduledTime: e.target.value })}
                   required
-                  className="w-full rounded-lg border border-slate-300 px-4 py-2.5 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30"
+                  className={`${inputCls} [color-scheme:dark]`}
                 />
               </label>
 
               <label className="block mb-4">
-                <span className="block text-sm font-medium text-slate-700 mb-1.5">Ghi chú (tuỳ chọn)</span>
+                <span className="block text-sm font-medium text-slate-300 mb-1.5">Ghi chú (tuỳ chọn)</span>
                 <textarea
                   value={form.note}
                   onChange={(e) => setForm({ ...form, note: e.target.value })}
                   rows={2}
-                  className="w-full rounded-lg border border-slate-300 px-4 py-2.5 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30 resize-none"
+                  className={`${inputCls} resize-none`}
                 />
               </label>
 
@@ -303,14 +309,14 @@ export default function BookingsPage() {
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="flex-1 rounded-lg border border-slate-300 text-slate-600 font-medium py-2.5 hover:bg-slate-50 transition"
+                  className="flex-1 rounded-lg border border-white/15 text-slate-300 font-medium py-2.5 hover:bg-white/5 transition"
                 >
                   Huỷ
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex-1 rounded-lg bg-gradient-to-r from-cyan-500 to-sky-600 text-white font-semibold py-2.5 hover:opacity-95 transition disabled:opacity-60"
+                  className="flex-1 rounded-lg bg-cyan-500 text-white font-semibold py-2.5 hover:bg-cyan-400 transition disabled:opacity-60"
                 >
                   {saving ? "Đang đặt..." : "Xác nhận đặt"}
                 </button>

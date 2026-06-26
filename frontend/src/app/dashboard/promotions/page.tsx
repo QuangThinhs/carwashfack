@@ -30,31 +30,31 @@ export default function PromotionsPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-950 text-white">
       <CustomerTopbar user={user} />
 
       <main className="max-w-4xl mx-auto px-6 py-8">
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-cyan-600 transition mb-5"
+          className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-cyan-400 transition mb-5"
         >
           <ArrowLeft size={16} /> Quay lại
         </Link>
 
-        <h1 className="text-2xl font-bold text-slate-800">Ưu đãi</h1>
-        <p className="text-slate-500 mt-1 mb-6">Khuyến mãi đang áp dụng cho hạng thành viên của bạn.</p>
+        <h1 className="text-2xl font-bold text-white">Ưu đãi</h1>
+        <p className="text-slate-400 mt-1 mb-6">Khuyến mãi đang áp dụng cho hạng thành viên của bạn.</p>
 
         {loading ? (
-          <p className="text-slate-400">Đang tải...</p>
+          <p className="text-slate-500">Đang tải...</p>
         ) : promos.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center">
-            <Ticket size={40} strokeWidth={1.5} className="mx-auto text-slate-300" />
-            <p className="mt-3 text-slate-500">Hiện chưa có ưu đãi nào cho hạng của bạn.</p>
+          <div className="bg-slate-900/50 rounded-2xl border border-dashed border-white/15 p-12 text-center">
+            <Ticket size={40} strokeWidth={1.5} className="mx-auto text-slate-600" />
+            <p className="mt-3 text-slate-400">Hiện chưa có ưu đãi nào cho hạng của bạn.</p>
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 gap-4">
             {promos.map((p) => (
-              <div key={p.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div key={p.id} className="bg-slate-900 border border-white/10 rounded-2xl overflow-hidden">
                 <div className="bg-gradient-to-r from-cyan-500 to-sky-600 text-white p-5 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Tag size={20} />
@@ -67,9 +67,9 @@ export default function PromotionsPage() {
                   )}
                 </div>
                 <div className="p-5">
-                  <h3 className="font-semibold text-slate-800">{p.name}</h3>
-                  <p className="text-sm text-slate-500 mt-1">{p.description}</p>
-                  <div className="mt-3 inline-block text-xs font-mono bg-slate-100 text-slate-600 rounded px-2 py-1">
+                  <h3 className="font-semibold text-white">{p.name}</h3>
+                  <p className="text-sm text-slate-400 mt-1">{p.description}</p>
+                  <div className="mt-3 inline-block text-xs font-mono bg-white/5 border border-white/10 text-slate-300 rounded px-2 py-1">
                     Mã: {p.code}
                   </div>
                 </div>

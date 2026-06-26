@@ -35,22 +35,22 @@ export default function LoyaltyPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-950 text-white">
       <CustomerTopbar user={user} />
 
       <main className="max-w-4xl mx-auto px-6 py-8">
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-cyan-600 transition mb-5"
+          className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-cyan-400 transition mb-5"
         >
           <ArrowLeft size={16} /> Quay lại
         </Link>
 
-        <h1 className="text-2xl font-bold text-slate-800">Điểm thưởng</h1>
-        <p className="text-slate-500 mt-1 mb-6">Tích điểm sau mỗi lần rửa và lên hạng để nhận ưu đãi.</p>
+        <h1 className="text-2xl font-bold text-white">Điểm thưởng</h1>
+        <p className="text-slate-400 mt-1 mb-6">Tích điểm sau mỗi lần rửa và lên hạng để nhận ưu đãi.</p>
 
         {loading || !summary ? (
-          <p className="text-slate-400">Đang tải...</p>
+          <p className="text-slate-500">Đang tải...</p>
         ) : (
           <>
             {/* The hang + diem */}
@@ -92,41 +92,42 @@ export default function LoyaltyPage() {
 
             {/* Thong ke */}
             <div className="grid sm:grid-cols-3 gap-4 mt-6">
-              <div className="bg-white rounded-2xl border border-slate-200 p-5">
-                <p className="text-sm text-slate-500">Tổng chi tiêu</p>
-                <p className="text-xl font-bold text-slate-800 mt-1">{fmtPrice(summary.lifetimeSpend)}</p>
+              <div className="bg-slate-900 border border-white/10 rounded-2xl p-5">
+                <p className="text-sm text-slate-400">Tổng chi tiêu</p>
+                <p className="text-xl font-bold text-white mt-1">{fmtPrice(summary.lifetimeSpend)}</p>
               </div>
-              <div className="bg-white rounded-2xl border border-slate-200 p-5">
-                <p className="text-sm text-slate-500">Số lần rửa</p>
-                <p className="text-xl font-bold text-slate-800 mt-1">{summary.visitCount}</p>
+              <div className="bg-slate-900 border border-white/10 rounded-2xl p-5">
+                <p className="text-sm text-slate-400">Số lần rửa</p>
+                <p className="text-xl font-bold text-white mt-1">{summary.visitCount}</p>
               </div>
-              <div className="bg-white rounded-2xl border border-slate-200 p-5">
-                <p className="text-sm text-slate-500">Ưu đãi hạng</p>
-                <p className="text-xl font-bold text-slate-800 mt-1">Giảm {summary.discountPercent}%</p>
+              <div className="bg-slate-900 border border-white/10 rounded-2xl p-5">
+                <p className="text-sm text-slate-400">Ưu đãi hạng</p>
+                <p className="text-xl font-bold text-white mt-1">Giảm {summary.discountPercent}%</p>
               </div>
             </div>
 
-            <p className="text-sm text-slate-500 mt-4">
-              Đặc quyền hạng <b>{summary.tierLabel}</b>: đặt lịch trước tối đa{" "}
-              <b>{summary.bookingWindowDays} ngày</b>, giảm <b>{summary.discountPercent}%</b> dịch vụ.
+            <p className="text-sm text-slate-400 mt-4">
+              Đặc quyền hạng <b className="text-slate-200">{summary.tierLabel}</b>: đặt lịch trước tối đa{" "}
+              <b className="text-slate-200">{summary.bookingWindowDays} ngày</b>, giảm{" "}
+              <b className="text-slate-200">{summary.discountPercent}%</b> dịch vụ.
             </p>
 
             {/* Lich su diem */}
-            <h2 className="text-lg font-bold text-slate-800 mt-8 mb-3">Lịch sử điểm</h2>
+            <h2 className="text-lg font-bold text-white mt-8 mb-3">Lịch sử điểm</h2>
             {history.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-10 text-center text-slate-500">
+              <div className="bg-slate-900/50 rounded-2xl border border-dashed border-white/15 p-10 text-center text-slate-400">
                 Chưa có giao dịch điểm nào. Hoàn tất một lần rửa để bắt đầu tích điểm!
               </div>
             ) : (
-              <div className="bg-white rounded-2xl border border-slate-200 divide-y divide-slate-100">
+              <div className="bg-slate-900 border border-white/10 rounded-2xl divide-y divide-white/10">
                 {history.map((h) => (
                   <div key={h.id} className="flex items-center justify-between p-4">
                     <div className="min-w-0">
-                      <p className="text-slate-800 truncate">{h.description || h.type}</p>
-                      <p className="text-xs text-slate-400">{fmtTime(h.createdAt)}</p>
+                      <p className="text-white truncate">{h.description || h.type}</p>
+                      <p className="text-xs text-slate-500">{fmtTime(h.createdAt)}</p>
                     </div>
                     <span
-                      className={`font-bold shrink-0 ${h.points >= 0 ? "text-green-600" : "text-red-500"}`}
+                      className={`font-bold shrink-0 ${h.points >= 0 ? "text-green-400" : "text-red-400"}`}
                     >
                       {h.points >= 0 ? "+" : ""}
                       {h.points} điểm

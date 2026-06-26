@@ -26,16 +26,20 @@ public class CustomerService {
         Customer customer = findByUsername(username);
         customer.setFullName(req.getFullName());
         customer.setEmail(req.getEmail());
+        customer.setDateOfBirth(req.getDateOfBirth());
+        customer.setGender(req.getGender());
+        customer.setAddress(req.getAddress());
         customerRepository.save(customer);
         return toResponse(customer);
     }
 
     private Customer findByUsername(String username) {
         return customerRepository.findByUserUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay ho so khach hang"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hồ sơ khách hàng"));
     }
 
     private CustomerProfileResponse toResponse(Customer c) {
-        return new CustomerProfileResponse(c.getFullName(), c.getPhone(), c.getEmail());
+        return new CustomerProfileResponse(c.getFullName(), c.getPhone(), c.getEmail(),
+                c.getDateOfBirth(), c.getGender(), c.getAddress());
     }
 }

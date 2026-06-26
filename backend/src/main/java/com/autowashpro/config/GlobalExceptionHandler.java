@@ -21,7 +21,7 @@ public class GlobalExceptionHandler {
         String message = ex.getBindingResult().getFieldErrors().stream()
                 .map(FieldError::getDefaultMessage)
                 .findFirst()
-                .orElse("Du lieu khong hop le");
+                .orElse("Dữ liệu không hợp lệ");
         return build(HttpStatus.BAD_REQUEST, message);
     }
 
@@ -32,7 +32,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<Map<String, Object>> handleAuth(AuthenticationException ex) {
-        return build(HttpStatus.UNAUTHORIZED, "Sai so dien thoai hoac mat khau");
+        return build(HttpStatus.UNAUTHORIZED, "Sai số điện thoại hoặc mật khẩu");
     }
 
     private ResponseEntity<Map<String, Object>> build(HttpStatus status, String message) {

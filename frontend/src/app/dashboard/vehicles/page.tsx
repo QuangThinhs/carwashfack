@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Plus, Pencil, Trash2, Bike, X } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, Trash2, Bike, Car, X } from "lucide-react";
 import { getUser, type AuthUser } from "@/lib/auth";
 import {
   getVehicles,
@@ -15,7 +15,15 @@ import {
 import CustomerTopbar from "@/components/CustomerTopbar";
 import Field from "@/components/Field";
 
-const EMPTY = { licensePlate: "", type: "", brand: "" };
+const inputCls =
+  "w-full rounded-lg border border-white/10 bg-slate-800 px-4 py-2.5 text-white outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30";
+
+const MOTO_BRANDS = ["Honda", "Yamaha", "Suzuki", "Piaggio", "SYM", "Vespa", "VinFast"];
+const CAR_BRANDS = ["Toyota", "Honda", "Mazda", "Hyundai", "Kia", "Ford", "Mitsubishi", "Mercedes-Benz", "BMW", "VinFast"];
+const MOTO_MODELS = ["Wave", "Vision", "Air Blade", "SH", "Lead", "Exciter", "Sirius", "Winner", "Grande", "Vario"];
+const CAR_MODELS = ["Vios", "City", "CX-5", "Accent", "Morning", "Ranger", "Camry", "Civic", "Xpander", "Santa Fe"];
+
+const EMPTY = { licensePlate: "", category: "Xe máy", brand: "", type: "" };
 
 export default function VehiclesPage() {
   const router = useRouter();
@@ -51,7 +59,15 @@ export default function VehiclesPage() {
 
   function openEdit(v: Vehicle) {
     setError("");
-    setModal({ id: v.id, data: { licensePlate: v.licensePlate, type: v.type ?? "", brand: v.brand ?? "" } });
+    setModal({
+      id: v.id,
+      data: {
+        licensePlate: v.licensePlate,
+        category: v.category ?? "Xe máy",
+        brand: v.brand ?? "",
+        type: v.type ?? "",
+      },
+    });
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -83,40 +99,44 @@ export default function VehiclesPage() {
 
   if (!user) return null;
 
+  const isCar = modal?.data.category === "Ô tô";
+  const brandList = isCar ? CAR_BRANDS : MOTO_BRANDS;
+  const modelList = isCar ? CAR_MODELS : MOTO_MODELS;
+
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-950 text-white">
       <CustomerTopbar user={user} />
 
       <main className="max-w-4xl mx-auto px-6 py-8">
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-cyan-600 transition mb-5"
+          className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-cyan-400 transition mb-5"
         >
           <ArrowLeft size={16} /> Quay lại
         </Link>
 
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">Xe của tôi</h1>
-            <p className="text-slate-500 mt-1">Quản lý danh sách xe máy của bạn.</p>
+            <h1 className="text-2xl font-bold text-white">Xe của tôi</h1>
+            <p className="text-slate-400 mt-1">Quản lý danh sách xe của bạn.</p>
           </div>
           <button
             onClick={openAdd}
-            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-500 to-sky-600 text-white font-semibold px-4 py-2.5 hover:opacity-95 transition"
+            className="inline-flex items-center gap-2 rounded-lg bg-cyan-500 text-white font-semibold px-4 py-2.5 hover:bg-cyan-400 transition"
           >
             <Plus size={18} /> Thêm xe
           </button>
         </div>
 
         {loading ? (
-          <p className="text-slate-400">Đang tải...</p>
+          <p className="text-slate-500">Đang tải...</p>
         ) : vehicles.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center">
-            <Bike size={40} strokeWidth={1.5} className="mx-auto text-slate-300" />
-            <p className="mt-3 text-slate-500">Bạn chưa có xe nào.</p>
+          <div className="bg-slate-900/50 rounded-2xl border border-dashed border-white/15 p-12 text-center">
+            <Bike size={40} strokeWidth={1.5} className="mx-auto text-slate-600" />
+            <p className="mt-3 text-slate-400">Bạn chưa có xe nào.</p>
             <button
               onClick={openAdd}
-              className="mt-4 inline-flex items-center gap-2 text-cyan-600 font-medium hover:underline"
+              className="mt-4 inline-flex items-center gap-2 text-cyan-400 font-medium hover:underline"
             >
               <Plus size={16} /> Thêm xe đầu tiên
             </button>
@@ -126,30 +146,30 @@ export default function VehiclesPage() {
             {vehicles.map((v) => (
               <div
                 key={v.id}
-                className="bg-white rounded-2xl border border-slate-200 p-5 flex items-start justify-between"
+                className="bg-slate-900 border border-white/10 rounded-2xl p-5 flex items-start justify-between"
               >
                 <div className="flex gap-3">
-                  <div className="w-11 h-11 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center shrink-0">
-                    <Bike size={22} />
+                  <div className="w-11 h-11 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center shrink-0">
+                    {v.category === "Ô tô" ? <Car size={22} /> : <Bike size={22} />}
                   </div>
                   <div>
-                    <p className="font-bold text-slate-800 text-lg">{v.licensePlate}</p>
-                    <p className="text-sm text-slate-500">
-                      {[v.brand, v.type].filter(Boolean).join(" · ") || "Chưa có thông tin"}
+                    <p className="font-bold text-white text-lg">{v.licensePlate}</p>
+                    <p className="text-sm text-slate-400">
+                      {[v.category, v.brand, v.type].filter(Boolean).join(" · ") || "Chưa có thông tin"}
                     </p>
                   </div>
                 </div>
                 <div className="flex gap-1 shrink-0">
                   <button
                     onClick={() => openEdit(v)}
-                    className="p-2 text-slate-400 hover:text-cyan-600 transition"
+                    className="p-2 text-slate-500 hover:text-cyan-400 transition"
                     title="Sửa"
                   >
                     <Pencil size={16} />
                   </button>
                   <button
                     onClick={() => handleDelete(v)}
-                    className="p-2 text-slate-400 hover:text-red-500 transition"
+                    className="p-2 text-slate-500 hover:text-red-400 transition"
                     title="Xoá"
                   >
                     <Trash2 size={16} />
@@ -164,27 +184,28 @@ export default function VehiclesPage() {
       {/* Modal them / sua xe */}
       {modal && (
         <div
-          className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
           onClick={() => setModal(null)}
         >
           <div
-            className="bg-white rounded-2xl w-full max-w-md p-6"
+            className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-md p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-slate-800">
+              <h2 className="text-lg font-bold text-white">
                 {modal.id == null ? "Thêm xe" : "Sửa xe"}
               </h2>
-              <button onClick={() => setModal(null)} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => setModal(null)} className="text-slate-400 hover:text-white">
                 <X size={20} />
               </button>
             </div>
             <form onSubmit={handleSubmit}>
               {error && (
-                <div className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3">
+                <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-sm px-4 py-3">
                   {error}
                 </div>
               )}
+
               <Field
                 label="Biển số xe"
                 placeholder="59A1-234.56"
@@ -192,30 +213,67 @@ export default function VehiclesPage() {
                 onChange={(e) => setModal({ ...modal, data: { ...modal.data, licensePlate: e.target.value } })}
                 required
               />
-              <Field
-                label="Hãng xe (tuỳ chọn)"
-                placeholder="Honda, Yamaha..."
-                value={modal.data.brand}
-                onChange={(e) => setModal({ ...modal, data: { ...modal.data, brand: e.target.value } })}
-              />
-              <Field
-                label="Loại / dòng xe (tuỳ chọn)"
-                placeholder="Wave, Vision, SH..."
-                value={modal.data.type}
-                onChange={(e) => setModal({ ...modal, data: { ...modal.data, type: e.target.value } })}
-              />
+
+              <label className="block mb-4">
+                <span className="block text-sm font-medium text-slate-300 mb-1.5">Loại xe</span>
+                <select
+                  value={modal.data.category}
+                  onChange={(e) => setModal({ ...modal, data: { ...modal.data, category: e.target.value } })}
+                  className={inputCls}
+                >
+                  <option value="Xe máy" className="bg-slate-800">Xe máy</option>
+                  <option value="Ô tô" className="bg-slate-800">Ô tô</option>
+                </select>
+              </label>
+
+              <label className="block mb-4">
+                <span className="block text-sm font-medium text-slate-300 mb-1.5">
+                  Hãng xe <span className="text-slate-500">(chọn hoặc tự nhập)</span>
+                </span>
+                <input
+                  list="brandOptions"
+                  placeholder={isCar ? "Toyota, Honda, Mazda..." : "Honda, Yamaha, Suzuki..."}
+                  value={modal.data.brand}
+                  onChange={(e) => setModal({ ...modal, data: { ...modal.data, brand: e.target.value } })}
+                  className={inputCls}
+                />
+                <datalist id="brandOptions">
+                  {brandList.map((b) => (
+                    <option key={b} value={b} />
+                  ))}
+                </datalist>
+              </label>
+
+              <label className="block mb-4">
+                <span className="block text-sm font-medium text-slate-300 mb-1.5">
+                  Dòng xe <span className="text-slate-500">(chọn hoặc tự nhập)</span>
+                </span>
+                <input
+                  list="modelOptions"
+                  placeholder={isCar ? "Vios, City, CX-5..." : "Wave, Vision, SH..."}
+                  value={modal.data.type}
+                  onChange={(e) => setModal({ ...modal, data: { ...modal.data, type: e.target.value } })}
+                  className={inputCls}
+                />
+                <datalist id="modelOptions">
+                  {modelList.map((m) => (
+                    <option key={m} value={m} />
+                  ))}
+                </datalist>
+              </label>
+
               <div className="flex gap-3 mt-2">
                 <button
                   type="button"
                   onClick={() => setModal(null)}
-                  className="flex-1 rounded-lg border border-slate-300 text-slate-600 font-medium py-2.5 hover:bg-slate-50 transition"
+                  className="flex-1 rounded-lg border border-white/15 text-slate-300 font-medium py-2.5 hover:bg-white/5 transition"
                 >
                   Huỷ
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex-1 rounded-lg bg-gradient-to-r from-cyan-500 to-sky-600 text-white font-semibold py-2.5 hover:opacity-95 transition disabled:opacity-60"
+                  className="flex-1 rounded-lg bg-cyan-500 text-white font-semibold py-2.5 hover:bg-cyan-400 transition disabled:opacity-60"
                 >
                   {saving ? "Đang lưu..." : "Lưu"}
                 </button>

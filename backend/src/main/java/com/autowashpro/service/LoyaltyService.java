@@ -105,6 +105,6 @@ public class LoyaltyService {
 
     private Customer customer(String username) {
         return customerRepo.findByUserUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay khach hang"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy khách hàng"));
     }
 }
