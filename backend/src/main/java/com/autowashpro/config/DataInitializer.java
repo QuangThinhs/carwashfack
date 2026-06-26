@@ -1,31 +1,51 @@
 package com.autowashpro.config;
 
 import com.autowashpro.entity.Promotion;
+import com.autowashpro.entity.Role;
 import com.autowashpro.entity.ServiceItem;
 import com.autowashpro.entity.Tier;
+import com.autowashpro.entity.User;
 import com.autowashpro.repository.PromotionRepository;
 import com.autowashpro.repository.ServiceItemRepository;
+import com.autowashpro.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.List;
 
-/** Seed danh muc dich vu + khuyen mai mac dinh khi bang con trong. */
+/** Seed tai khoan admin + danh muc dich vu + khuyen mai mac dinh khi bang con trong. */
 @Component
 public class DataInitializer implements CommandLineRunner {
 
     private final ServiceItemRepository serviceItemRepository;
     private final PromotionRepository promotionRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public DataInitializer(ServiceItemRepository serviceItemRepository,
-                           PromotionRepository promotionRepository) {
+                           PromotionRepository promotionRepository,
+                           UserRepository userRepository,
+                           PasswordEncoder passwordEncoder) {
         this.serviceItemRepository = serviceItemRepository;
         this.promotionRepository = promotionRepository;
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     public void run(String... args) {
+        // Tai khoan quan tri mac dinh (username: admin / password: admin123)
+        if (!userRepository.existsByUsername("admin")) {
+            User admin = new User();
+            admin.setUsername("admin");
+            admin.setPasswordHash(passwordEncoder.encode("admin123"));
+            admin.setRole(Role.ADMIN);
+            admin.setEnabled(true);
+            userRepository.save(admin);
+        }
+
         if (serviceItemRepository.count() == 0) {
             serviceItemRepository.saveAll(List.of(
                     service("Rửa xe cơ bản", "WASH_PACKAGE", 30000, 20),
