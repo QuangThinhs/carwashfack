@@ -36,11 +36,11 @@ export default function RegisterPage() {
   return (
     <AuthShell
       title="Tạo tài khoản"
-      subtitle="Đăng ký để bắt đầu tích điểm 🎉"
+      subtitle="Đăng ký để bắt đầu tích điểm"
       footer={
         <>
           Đã có tài khoản?{" "}
-          <Link href="/login" className="text-cyan-600 font-medium hover:underline">
+          <Link href="/login" className="text-cyan-400 font-medium hover:underline">
             Đăng nhập
           </Link>
         </>
@@ -48,7 +48,7 @@ export default function RegisterPage() {
     >
       <form onSubmit={handleSubmit}>
         {error && (
-          <div className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3">
+          <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-sm px-4 py-3">
             {error}
           </div>
         )}

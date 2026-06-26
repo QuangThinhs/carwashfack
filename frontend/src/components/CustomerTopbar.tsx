@@ -19,27 +19,28 @@ export default function CustomerTopbar({ user }: { user: AuthUser }) {
   }, []);
 
   function handleLogout() {
+    if (!confirm("Bạn có chắc muốn đăng xuất?")) return;
     clearAuth();
     router.push("/login");
   }
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-slate-200">
+    <header className="sticky top-0 z-40 bg-slate-900/80 backdrop-blur border-b border-white/10">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Link href="/dashboard" className="text-cyan-600">
+        <Link href="/dashboard" className="text-white">
           <Logo className="text-xl" size={22} />
         </Link>
         <div className="flex items-center gap-4">
           <div className="hidden sm:flex items-center gap-2 text-sm">
-            <span className="text-slate-500">Xin chào,</span>
-            <span className="font-semibold text-slate-800">{user.fullName}</span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 text-amber-600 text-xs font-semibold px-2.5 py-1">
+            <span className="text-slate-400">Xin chào,</span>
+            <span className="font-semibold text-white">{user.fullName}</span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-300 text-xs font-semibold px-2.5 py-1">
               <Crown size={13} /> {tier}
             </span>
           </div>
           <button
             onClick={handleLogout}
-            className="inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-red-500 transition"
+            className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-red-400 transition"
           >
             <LogOut size={16} /> Đăng xuất
           </button>

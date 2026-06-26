@@ -7,18 +7,18 @@ import jakarta.validation.constraints.Size;
 
 public class RegisterRequest {
 
-    @NotBlank(message = "Vui long nhap ho ten")
+    @NotBlank(message = "Vui lòng nhập họ tên")
     private String fullName;
 
-    @NotBlank(message = "Vui long nhap so dien thoai")
-    @Pattern(regexp = "^0\\d{9}$", message = "So dien thoai khong hop le (10 so, bat dau bang 0)")
+    @NotBlank(message = "Vui lòng nhập số điện thoại")
+    @Pattern(regexp = "^0\\d{9}$", message = "Số điện thoại không hợp lệ (10 số, bắt đầu bằng 0)")
     private String phone;
 
-    @Email(message = "Email khong hop le")
+    @Email(message = "Email không hợp lệ")
     private String email;
 
-    @NotBlank(message = "Vui long nhap mat khau")
-    @Size(min = 6, message = "Mat khau toi thieu 6 ky tu")
+    @NotBlank(message = "Vui lòng nhập mật khẩu")
+    @Size(min = 6, message = "Mật khẩu tối thiểu 6 ký tự")
     private String password;
 
     public String getFullName() {

@@ -6,13 +6,13 @@ import java.time.LocalDateTime;
 
 public class BookingRequest {
 
-    @NotNull(message = "Vui long chon xe")
+    @NotNull(message = "Vui lòng chọn xe")
     private Long vehicleId;
 
-    @NotNull(message = "Vui long chon dich vu")
+    @NotNull(message = "Vui lòng chọn dịch vụ")
     private Long serviceId;
 
-    @NotNull(message = "Vui long chon thoi gian")
+    @NotNull(message = "Vui lòng chọn thời gian")
     private LocalDateTime scheduledTime;
 
     private String note;

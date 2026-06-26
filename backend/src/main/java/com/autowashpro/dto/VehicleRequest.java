@@ -4,8 +4,10 @@ import jakarta.validation.constraints.NotBlank;
 
 public class VehicleRequest {
 
-    @NotBlank(message = "Vui long nhap bien so xe")
+    @NotBlank(message = "Vui lòng nhập biển số xe")
     private String licensePlate;
+
+    private String category;
 
     private String type;
 
@@ -17,6 +19,14 @@ public class VehicleRequest {
 
     public void setLicensePlate(String licensePlate) {
         this.licensePlate = licensePlate;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
     }
 
     public String getType() {

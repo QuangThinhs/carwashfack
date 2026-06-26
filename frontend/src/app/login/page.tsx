@@ -33,11 +33,11 @@ export default function LoginPage() {
   return (
     <AuthShell
       title="Đăng nhập"
-      subtitle="Chào mừng bạn quay lại 👋"
+      subtitle="Chào mừng bạn quay lại"
       footer={
         <>
           Chưa có tài khoản?{" "}
-          <Link href="/register" className="text-cyan-600 font-medium hover:underline">
+          <Link href="/register" className="text-cyan-400 font-medium hover:underline">
             Đăng ký ngay
           </Link>
         </>
@@ -45,7 +45,7 @@ export default function LoginPage() {
     >
       <form onSubmit={handleSubmit}>
         {error && (
-          <div className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3">
+          <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-sm px-4 py-3">
             {error}
           </div>
         )}

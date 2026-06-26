@@ -55,30 +55,30 @@ export default function DashboardPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-950 text-white">
       <CustomerTopbar user={user} />
 
       <main className="max-w-6xl mx-auto px-6 py-8">
         {/* Tong quan + the hang thanh vien */}
         <section className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-8">
-            <h1 className="text-2xl font-bold text-slate-800">Xin chào, {user.fullName}</h1>
-            <p className="text-slate-500 mt-2">
+          <div className="lg:col-span-2 bg-slate-900 border border-white/10 rounded-2xl p-8">
+            <h1 className="text-2xl font-bold text-white">Xin chào, {user.fullName}</h1>
+            <p className="text-slate-400 mt-2">
               Chào mừng bạn đến với trang quản lý AutoWash Pro — nơi bạn đặt lịch, theo dõi điểm thưởng
               và quản lý xe của mình.
             </p>
             <div className="mt-6 grid sm:grid-cols-3 gap-4">
-              <div className="rounded-xl bg-slate-50 p-4">
-                <p className="text-sm text-slate-500">Số điện thoại</p>
-                <p className="font-semibold text-slate-800">{user.phone}</p>
+              <div className="rounded-xl bg-white/5 p-4">
+                <p className="text-sm text-slate-400">Số điện thoại</p>
+                <p className="font-semibold text-white">{user.phone}</p>
               </div>
-              <div className="rounded-xl bg-slate-50 p-4">
-                <p className="text-sm text-slate-500">Xe đã đăng ký</p>
-                <p className="font-semibold text-slate-800">{vehicleCount}</p>
+              <div className="rounded-xl bg-white/5 p-4">
+                <p className="text-sm text-slate-400">Xe đã đăng ký</p>
+                <p className="font-semibold text-white">{vehicleCount}</p>
               </div>
-              <div className="rounded-xl bg-slate-50 p-4">
-                <p className="text-sm text-slate-500">Lượt rửa</p>
-                <p className="font-semibold text-slate-800">{washCount}</p>
+              <div className="rounded-xl bg-white/5 p-4">
+                <p className="text-sm text-slate-400">Lượt rửa</p>
+                <p className="font-semibold text-white">{washCount}</p>
               </div>
             </div>
           </div>
@@ -102,39 +102,22 @@ export default function DashboardPage() {
 
         {/* Luoi chuc nang */}
         <section className="mt-10">
-          <h2 className="text-lg font-bold text-slate-800">Chức năng</h2>
-          <p className="text-sm text-slate-500 mt-1">
-            Bấm vào một chức năng để bắt đầu. Các mục "Sắp có" đang được phát triển.
-          </p>
+          <h2 className="text-lg font-bold text-white">Chức năng</h2>
+          <p className="text-sm text-slate-400 mt-1">Chọn một chức năng để bắt đầu.</p>
           <div className="mt-5 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {features.map((f) => {
-              const cls =
-                "relative bg-white rounded-2xl border border-slate-200 p-6 block" +
-                (f.href ? " hover:shadow-lg hover:-translate-y-0.5 transition" : "");
-              const inner = (
-                <>
-                  {!f.href && (
-                    <span className="absolute top-4 right-4 text-[11px] font-semibold text-slate-400 bg-slate-100 rounded-full px-2 py-0.5">
-                      Sắp có
-                    </span>
-                  )}
-                  <div className="w-12 h-12 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center">
-                    <f.Icon size={24} strokeWidth={1.9} />
-                  </div>
-                  <h3 className="mt-4 font-semibold text-slate-800">{f.title}</h3>
-                  <p className="mt-1 text-sm text-slate-500">{f.desc}</p>
-                </>
-              );
-              return f.href ? (
-                <Link key={f.title} href={f.href} className={cls}>
-                  {inner}
-                </Link>
-              ) : (
-                <div key={f.title} className={cls}>
-                  {inner}
+            {features.map((f) => (
+              <Link
+                key={f.title}
+                href={f.href}
+                className="bg-slate-900 border border-white/10 rounded-2xl p-6 block hover:bg-slate-800 hover:-translate-y-0.5 transition"
+              >
+                <div className="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center">
+                  <f.Icon size={24} strokeWidth={1.9} />
                 </div>
-              );
-            })}
+                <h3 className="mt-4 font-semibold text-white">{f.title}</h3>
+                <p className="mt-1 text-sm text-slate-400">{f.desc}</p>
+              </Link>
+            ))}
           </div>
         </section>
       </main>

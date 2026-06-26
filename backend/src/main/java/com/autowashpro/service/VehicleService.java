@@ -56,6 +56,7 @@ public class VehicleService {
 
     private void apply(Vehicle vehicle, VehicleRequest req) {
         vehicle.setLicensePlate(req.getLicensePlate());
+        vehicle.setCategory(req.getCategory());
         vehicle.setType(req.getType());
         vehicle.setBrand(req.getBrand());
     }
@@ -64,15 +65,15 @@ public class VehicleService {
     private Vehicle ownedVehicle(String username, Long id) {
         Customer customer = currentCustomer(username);
         return vehicleRepository.findByIdAndCustomerId(id, customer.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay xe"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy xe"));
     }
 
     private Customer currentCustomer(String username) {
         return customerRepository.findByUserUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay khach hang"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy khách hàng"));
     }
 
     private VehicleResponse toResponse(Vehicle v) {
-        return new VehicleResponse(v.getId(), v.getLicensePlate(), v.getType(), v.getBrand());
+        return new VehicleResponse(v.getId(), v.getLicensePlate(), v.getCategory(), v.getType(), v.getBrand());
     }
 }

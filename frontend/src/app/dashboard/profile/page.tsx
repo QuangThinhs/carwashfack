@@ -9,10 +9,22 @@ import { getProfile, updateProfile } from "@/services/customer";
 import CustomerTopbar from "@/components/CustomerTopbar";
 import Field from "@/components/Field";
 
+const inputCls =
+  "w-full rounded-lg border border-white/10 bg-slate-800 px-4 py-2.5 text-white outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30";
+
+type FormKey = "fullName" | "email" | "dateOfBirth" | "gender" | "address";
+
 export default function ProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [form, setForm] = useState({ fullName: "", phone: "", email: "" });
+  const [form, setForm] = useState({
+    fullName: "",
+    phone: "",
+    email: "",
+    dateOfBirth: "",
+    gender: "",
+    address: "",
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
@@ -25,12 +37,21 @@ export default function ProfilePage() {
     }
     setUser(u);
     getProfile()
-      .then((p) => setForm({ fullName: p.fullName, phone: p.phone, email: p.email ?? "" }))
-      .catch(() => setForm({ fullName: u.fullName, phone: u.phone, email: "" }))
+      .then((p) =>
+        setForm({
+          fullName: p.fullName,
+          phone: p.phone,
+          email: p.email ?? "",
+          dateOfBirth: p.dateOfBirth ?? "",
+          gender: p.gender ?? "",
+          address: p.address ?? "",
+        }),
+      )
+      .catch(() => setForm((f) => ({ ...f, fullName: u.fullName, phone: u.phone })))
       .finally(() => setLoading(false));
   }, [router]);
 
-  function update(key: "fullName" | "email", value: string) {
+  function update(key: FormKey, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
@@ -39,8 +60,13 @@ export default function ProfilePage() {
     setSaving(true);
     setMessage(null);
     try {
-      const p = await updateProfile({ fullName: form.fullName, email: form.email });
-      // Cap nhat localStorage de ten hien thi tren topbar/dashboard doi theo
+      const p = await updateProfile({
+        fullName: form.fullName,
+        email: form.email || undefined,
+        dateOfBirth: form.dateOfBirth || undefined,
+        gender: form.gender || undefined,
+        address: form.address || undefined,
+      });
       const token = getToken();
       if (token && user) saveAuth(token, { ...user, fullName: p.fullName });
       setUser((u) => (u ? { ...u, fullName: p.fullName } : u));
@@ -55,31 +81,31 @@ export default function ProfilePage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-950 text-white">
       <CustomerTopbar user={user} />
 
       <main className="max-w-3xl mx-auto px-6 py-8">
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-cyan-600 transition mb-5"
+          className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-cyan-400 transition mb-5"
         >
           <ArrowLeft size={16} /> Quay lại
         </Link>
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-8">
-          <h1 className="text-2xl font-bold text-slate-800">Hồ sơ cá nhân</h1>
-          <p className="text-slate-500 mt-1 mb-6">Xem và cập nhật thông tin của bạn.</p>
+        <div className="bg-slate-900 border border-white/10 rounded-2xl p-8">
+          <h1 className="text-2xl font-bold text-white">Hồ sơ cá nhân</h1>
+          <p className="text-slate-400 mt-1 mb-6">Xem và cập nhật thông tin của bạn.</p>
 
           {loading ? (
-            <p className="text-slate-400">Đang tải...</p>
+            <p className="text-slate-500">Đang tải...</p>
           ) : (
             <form onSubmit={handleSubmit}>
               {message && (
                 <div
                   className={`mb-4 rounded-lg text-sm px-4 py-3 border ${
                     message.type === "ok"
-                      ? "bg-green-50 border-green-200 text-green-600"
-                      : "bg-red-50 border-red-200 text-red-600"
+                      ? "bg-green-500/10 border-green-500/30 text-green-300"
+                      : "bg-red-500/10 border-red-500/30 text-red-300"
                   }`}
                 >
                   {message.text}
@@ -93,14 +119,39 @@ export default function ProfilePage() {
                 required
               />
 
+              <div className="grid sm:grid-cols-2 gap-4">
+                <label className="block mb-4">
+                  <span className="block text-sm font-medium text-slate-300 mb-1.5">Ngày sinh</span>
+                  <input
+                    type="date"
+                    value={form.dateOfBirth}
+                    onChange={(e) => update("dateOfBirth", e.target.value)}
+                    className={`${inputCls} [color-scheme:dark]`}
+                  />
+                </label>
+                <label className="block mb-4">
+                  <span className="block text-sm font-medium text-slate-300 mb-1.5">Giới tính</span>
+                  <select
+                    value={form.gender}
+                    onChange={(e) => update("gender", e.target.value)}
+                    className={inputCls}
+                  >
+                    <option value="" className="bg-slate-800">-- Chọn --</option>
+                    <option value="Nam" className="bg-slate-800">Nam</option>
+                    <option value="Nữ" className="bg-slate-800">Nữ</option>
+                    <option value="Khác" className="bg-slate-800">Khác</option>
+                  </select>
+                </label>
+              </div>
+
               <label className="block mb-4">
-                <span className="block text-sm font-medium text-slate-700 mb-1.5">Số điện thoại</span>
+                <span className="block text-sm font-medium text-slate-300 mb-1.5">Số điện thoại</span>
                 <input
                   value={form.phone}
                   disabled
-                  className="w-full rounded-lg border border-slate-200 bg-slate-100 px-4 py-2.5 text-slate-500 cursor-not-allowed"
+                  className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-4 py-2.5 text-slate-500 cursor-not-allowed"
                 />
-                <span className="text-xs text-slate-400 mt-1 block">
+                <span className="text-xs text-slate-500 mt-1 block">
                   Số điện thoại là tài khoản đăng nhập, không thể thay đổi.
                 </span>
               </label>
@@ -113,10 +164,17 @@ export default function ProfilePage() {
                 onChange={(e) => update("email", e.target.value)}
               />
 
+              <Field
+                label="Địa chỉ"
+                placeholder="Số nhà, đường, phường/xã, quận/huyện..."
+                value={form.address}
+                onChange={(e) => update("address", e.target.value)}
+              />
+
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-500 to-sky-600 text-white font-semibold px-6 py-2.5 mt-2 hover:opacity-95 transition disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-lg bg-cyan-500 text-white font-semibold px-6 py-2.5 mt-2 hover:bg-cyan-400 transition disabled:opacity-60"
               >
                 <Save size={16} /> {saving ? "Đang lưu..." : "Lưu thay đổi"}
               </button>
