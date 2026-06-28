@@ -1,12 +1,14 @@
 package com.autowashpro.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class BookingResponse {
 
     private Long id;
     private String vehiclePlate;
     private String serviceName;
+    private List<ServiceLineResponse> services;
     private LocalDateTime scheduledTime;
     private String status;
     private long price;
@@ -17,12 +19,13 @@ public class BookingResponse {
     public BookingResponse() {
     }
 
-    public BookingResponse(Long id, String vehiclePlate, String serviceName,
+    public BookingResponse(Long id, String vehiclePlate, String serviceName, List<ServiceLineResponse> services,
                            LocalDateTime scheduledTime, String status, long price, String note,
                            Long originalPrice, String promoCode) {
         this.id = id;
         this.vehiclePlate = vehiclePlate;
         this.serviceName = serviceName;
+        this.services = services;
         this.scheduledTime = scheduledTime;
         this.status = status;
         this.price = price;
@@ -41,6 +44,10 @@ public class BookingResponse {
 
     public String getServiceName() {
         return serviceName;
+    }
+
+    public List<ServiceLineResponse> getServices() {
+        return services;
     }
 
     public LocalDateTime getScheduledTime() {

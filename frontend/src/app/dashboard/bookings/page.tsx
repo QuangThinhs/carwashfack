@@ -42,7 +42,9 @@ export default function BookingsPage() {
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ vehicleId: "", serviceId: "", scheduledTime: "", note: "" });
+  const [form, setForm] = useState<{ vehicleId: string; serviceIds: number[]; scheduledTime: string; note: string }>(
+    { vehicleId: "", serviceIds: [], scheduledTime: "", note: "" },
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [promoCode, setPromoCode] = useState("");
@@ -80,21 +82,33 @@ export default function BookingsPage() {
     setPromo(null);
     setForm({
       vehicleId: String(vehicles[0].id),
-      serviceId: services[0] ? String(services[0].id) : "",
+      serviceIds: services[0] ? [services[0].id] : [],
       scheduledTime: "",
       note: "",
     });
     setOpen(true);
   }
 
+  function toggleService(id: number) {
+    setForm((f) => ({
+      ...f,
+      serviceIds: f.serviceIds.includes(id) ? f.serviceIds.filter((x) => x !== id) : [...f.serviceIds, id],
+    }));
+    setPromo(null);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (form.serviceIds.length === 0) {
+      setError("Vui lòng chọn ít nhất một dịch vụ.");
+      return;
+    }
     setSaving(true);
     setError("");
     try {
       await createBooking({
         vehicleId: Number(form.vehicleId),
-        serviceId: Number(form.serviceId),
+        serviceIds: form.serviceIds,
         scheduledTime: form.scheduledTime,
         note: form.note,
         promoCode: promo?.valid ? promoCode.trim() : undefined,
@@ -109,10 +123,10 @@ export default function BookingsPage() {
   }
 
   async function handleApplyPromo() {
-    if (!promoCode.trim() || !form.serviceId) return;
+    if (!promoCode.trim() || form.serviceIds.length === 0) return;
     setPromoChecking(true);
     try {
-      const r = await applyPromo(promoCode.trim(), Number(form.serviceId));
+      const r = await applyPromo(promoCode.trim(), form.serviceIds);
       setPromo(r);
     } catch {
       setPromo(null);
@@ -147,7 +161,7 @@ export default function BookingsPage() {
   const active = bookings.filter((b) => ACTIVE_STATUSES.includes(b.status));
   const now = new Date();
   const max = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-  const baseTotal = services.find((s) => String(s.id) === form.serviceId)?.price ?? 0;
+  const baseTotal = services.filter((s) => form.serviceIds.includes(s.id)).reduce((sum, s) => sum + s.price, 0);
   const finalTotal = promo?.valid ? promo.finalPrice : baseTotal;
 
   return (
@@ -284,7 +298,10 @@ export default function BookingsPage() {
                 <span className="block text-sm font-medium text-slate-300 mb-1.5">Chọn xe</span>
                 <select
                   value={form.vehicleId}
-                  onChange={(e) => setForm({ ...form, vehicleId: e.target.value })}
+                  onChange={(e) => {
+                    setForm({ ...form, vehicleId: e.target.value });
+                    setPromo(null);
+                  }}
                   required
                   className={inputCls}
                 >
@@ -297,24 +314,35 @@ export default function BookingsPage() {
                 </select>
               </label>
 
-              <label className="block mb-4">
-                <span className="block text-sm font-medium text-slate-300 mb-1.5">Dịch vụ</span>
-                <select
-                  value={form.serviceId}
-                  onChange={(e) => {
-                    setForm({ ...form, serviceId: e.target.value });
-                    setPromo(null);
-                  }}
-                  required
-                  className={inputCls}
-                >
-                  {services.map((s) => (
-                    <option key={s.id} value={s.id} className="bg-slate-800">
-                      {s.name} — {fmtPrice(s.price)}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <div className="mb-4">
+                <span className="block text-sm font-medium text-slate-300 mb-1.5">Dịch vụ (chọn 1 hoặc nhiều)</span>
+                <div className="space-y-1.5">
+                  {services.map((s) => {
+                    const checked = form.serviceIds.includes(s.id);
+                    return (
+                      <label
+                        key={s.id}
+                        className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2 cursor-pointer transition ${
+                          checked
+                            ? "border-cyan-500/50 bg-cyan-500/10"
+                            : "border-white/10 bg-slate-800 hover:bg-slate-700/50"
+                        }`}
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleService(s.id)}
+                            className="w-4 h-4 accent-cyan-500"
+                          />
+                          <span className="text-sm text-white">{s.name}</span>
+                        </span>
+                        <span className="text-sm text-slate-400">{fmtPrice(s.price)}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
 
               <div className="mb-4">
                 <span className="block text-sm font-medium text-slate-300 mb-1.5">Mã khuyến mãi (tuỳ chọn)</span>

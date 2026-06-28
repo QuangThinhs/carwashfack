@@ -16,6 +16,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- Xoá bảng cũ (kể cả các bảng thừa từ thiết kế cũ) để dựng lại sạch
 DROP TABLE IF EXISTS wash_bays;
 DROP TABLE IF EXISTS promotion_customers;
+DROP TABLE IF EXISTS booking_extra_services;
 DROP TABLE IF EXISTS point_transactions;
 DROP TABLE IF EXISTS loyalty_accounts;
 DROP TABLE IF EXISTS bookings;
@@ -187,6 +188,17 @@ CREATE TABLE promotion_customers (
     PRIMARY KEY (promotion_id, customer_id),
     CONSTRAINT fk_promocust_promo    FOREIGN KEY (promotion_id) REFERENCES promotions (id),
     CONSTRAINT fk_promocust_customer FOREIGN KEY (customer_id)  REFERENCES customers (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- ---------------------------------------------------------------------
+-- 11. booking_extra_services — dịch vụ chọn thêm của một đơn (ngoài dịch vụ chính)
+-- ---------------------------------------------------------------------
+CREATE TABLE booking_extra_services (
+    booking_id BIGINT NOT NULL,
+    service_id BIGINT NOT NULL,
+    PRIMARY KEY (booking_id, service_id),
+    CONSTRAINT fk_bes_booking FOREIGN KEY (booking_id) REFERENCES bookings (id),
+    CONSTRAINT fk_bes_service FOREIGN KEY (service_id) REFERENCES services (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 

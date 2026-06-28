@@ -1,6 +1,7 @@
 import { api } from "./api";
 import type { AdminBooking } from "./admin";
 import type { PromoApplyResult } from "./promotion";
+import type { ServiceLine } from "./booking";
 
 export type { AdminBooking };
 
@@ -10,9 +11,14 @@ export interface WashBay {
   status: string; // FREE | OCCUPIED
   bookingId: number | null;
   customerName: string | null;
+  customerPhone: string | null;
   vehiclePlate: string | null;
   serviceName: string | null;
+  services: ServiceLine[] | null;
   price: number;
+  originalPrice: number | null;
+  promoCode: string | null;
+  scheduledTime: string | null;
 }
 
 export interface AdminVehicle {
@@ -42,14 +48,14 @@ export async function assignBay(bayId: number, bookingId: number): Promise<void>
 
 export async function createBayOrder(
   bayId: number,
-  data: { customerName: string; customerPhone?: string; vehiclePlate: string; serviceId: number; promoCode?: string },
+  data: { customerName: string; customerPhone?: string; vehiclePlate: string; serviceIds: number[]; promoCode?: string },
 ): Promise<void> {
   await api.post(`/api/admin/bays/${bayId}/order`, data);
 }
 
 /** Xem trước giảm giá cho order khách vãng lai (chỉ mã đối tượng "Tất cả"). */
-export async function applyAdminPromo(code: string, serviceId: number): Promise<PromoApplyResult> {
-  const res = await api.post<PromoApplyResult>("/api/admin/promotions/apply", { code, serviceId });
+export async function applyAdminPromo(code: string, serviceIds: number[]): Promise<PromoApplyResult> {
+  const res = await api.post<PromoApplyResult>("/api/admin/promotions/apply", { code, serviceIds });
   return res.data;
 }
 

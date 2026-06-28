@@ -3,6 +3,11 @@ package com.autowashpro.entity;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /** Lich dat / order rua xe (bang `bookings`). Khach co tai khoan -> customer/vehicle; khach vang lai -> walkin_*. */
 @Entity
@@ -23,9 +28,17 @@ public class Booking {
     @JoinColumn(name = "vehicle_id")
     private Vehicle vehicle;
 
+    /** Dich vu chinh (dich vu dau tien khach chon). */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "service_id", nullable = false)
     private ServiceItem service;
+
+    /** Cac dich vu chon them (ngoai dich vu chinh). */
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "booking_extra_services",
+            joinColumns = @JoinColumn(name = "booking_id"),
+            inverseJoinColumns = @JoinColumn(name = "service_id"))
+    private Set<ServiceItem> extraServices = new LinkedHashSet<>();
 
     @Column(name = "scheduled_time", nullable = false)
     private LocalDateTime scheduledTime;
@@ -95,6 +108,29 @@ public class Booking {
 
     public void setService(ServiceItem service) {
         this.service = service;
+    }
+
+    public Set<ServiceItem> getExtraServices() {
+        return extraServices;
+    }
+
+    public void setExtraServices(Set<ServiceItem> extraServices) {
+        this.extraServices = extraServices;
+    }
+
+    /** Tat ca dich vu cua don: chinh + cac dich vu them. */
+    public List<ServiceItem> allServices() {
+        List<ServiceItem> all = new ArrayList<>();
+        if (service != null) {
+            all.add(service);
+        }
+        all.addAll(extraServices);
+        return all;
+    }
+
+    /** Ten gop cac dich vu, vd "Rửa cơ bản + Đánh bóng". */
+    public String serviceLabel() {
+        return allServices().stream().map(ServiceItem::getName).collect(Collectors.joining(" + "));
     }
 
     public LocalDateTime getScheduledTime() {

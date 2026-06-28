@@ -8,10 +8,16 @@ export interface ServiceItem {
   durationMin: number;
 }
 
+export interface ServiceLine {
+  name: string;
+  price: number;
+}
+
 export interface Booking {
   id: number;
   vehiclePlate: string;
   serviceName: string;
+  services: ServiceLine[];
   scheduledTime: string;
   status: string;
   price: number;
@@ -22,7 +28,7 @@ export interface Booking {
 
 export interface BookingPayload {
   vehicleId: number;
-  serviceId: number;
+  serviceIds: number[];
   scheduledTime: string; // "YYYY-MM-DDTHH:mm"
   note?: string;
   promoCode?: string;

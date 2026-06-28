@@ -1,7 +1,9 @@
 package com.autowashpro.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotEmpty;
+
+import java.util.List;
 
 /** Tao order rua xe nhanh tai bai cho khach vang lai (nhap thong tin truc tiep). */
 public class BayOrderRequest {
@@ -14,8 +16,8 @@ public class BayOrderRequest {
     @NotBlank(message = "Vui lòng nhập biển số xe")
     private String vehiclePlate;
 
-    @NotNull(message = "Vui lòng chọn dịch vụ")
-    private Long serviceId;
+    @NotEmpty(message = "Vui lòng chọn ít nhất một dịch vụ")
+    private List<Long> serviceIds;
 
     /** Ma khuyen mai (tuy chon). */
     private String promoCode;
@@ -44,12 +46,12 @@ public class BayOrderRequest {
         this.vehiclePlate = vehiclePlate;
     }
 
-    public Long getServiceId() {
-        return serviceId;
+    public List<Long> getServiceIds() {
+        return serviceIds;
     }
 
-    public void setServiceId(Long serviceId) {
-        this.serviceId = serviceId;
+    public void setServiceIds(List<Long> serviceIds) {
+        this.serviceIds = serviceIds;
     }
 
     public String getPromoCode() {

@@ -1,5 +1,7 @@
 import { api } from "./api";
 
+import type { ServiceLine } from "./booking";
+
 export interface AdminBooking {
   id: number;
   customerName: string;
@@ -7,9 +9,12 @@ export interface AdminBooking {
   vehiclePlate: string | null;
   vehicleInfo: string | null;
   serviceName: string;
+  services: ServiceLine[];
   scheduledTime: string;
   status: string;
   price: number;
+  originalPrice: number | null;
+  promoCode: string | null;
   note: string | null;
   walkIn: boolean;
 }

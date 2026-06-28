@@ -26,7 +26,7 @@ export async function getPromotions(): Promise<Promotion[]> {
 }
 
 /** Kiểm tra / xem trước giảm giá khi khách nhập mã cho một dịch vụ. */
-export async function applyPromo(code: string, serviceId: number): Promise<PromoApplyResult> {
-  const res = await api.post<PromoApplyResult>("/api/promotions/apply", { code, serviceId });
+export async function applyPromo(code: string, serviceIds: number[]): Promise<PromoApplyResult> {
+  const res = await api.post<PromoApplyResult>("/api/promotions/apply", { code, serviceIds });
   return res.data;
 }

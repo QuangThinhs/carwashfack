@@ -48,6 +48,6 @@ public class AdminPromotionController {
     /** Xem truoc giam gia cho order khach vang lai tai quay (chi ma doi tuong ALL). */
     @PostMapping("/apply")
     public PromoApplyResponse apply(@Valid @RequestBody PromoApplyRequest req) {
-        return promotionService.previewForWalkIn(req.getCode(), req.getServiceId());
+        return promotionService.previewForWalkIn(req.getCode(), req.getServiceIds());
     }
 }

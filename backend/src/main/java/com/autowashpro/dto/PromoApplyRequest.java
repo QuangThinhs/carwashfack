@@ -1,16 +1,18 @@
 package com.autowashpro.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotEmpty;
 
-/** Khach xem truoc giam gia cua mot ma cho mot dich vu. */
+import java.util.List;
+
+/** Khach/admin xem truoc giam gia cua mot ma cho cac dich vu da chon. */
 public class PromoApplyRequest {
 
     @NotBlank(message = "Vui lòng nhập mã khuyến mãi")
     private String code;
 
-    @NotNull(message = "Vui lòng chọn dịch vụ")
-    private Long serviceId;
+    @NotEmpty(message = "Vui lòng chọn ít nhất một dịch vụ")
+    private List<Long> serviceIds;
 
     public String getCode() {
         return code;
@@ -20,11 +22,11 @@ public class PromoApplyRequest {
         this.code = code;
     }
 
-    public Long getServiceId() {
-        return serviceId;
+    public List<Long> getServiceIds() {
+        return serviceIds;
     }
 
-    public void setServiceId(Long serviceId) {
-        this.serviceId = serviceId;
+    public void setServiceIds(List<Long> serviceIds) {
+        this.serviceIds = serviceIds;
     }
 }

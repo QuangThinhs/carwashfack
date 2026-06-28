@@ -56,7 +56,7 @@ public class AdminBayController {
     @PostMapping("/{id}/order")
     public ResponseEntity<Void> order(@PathVariable Long id, @Valid @RequestBody BayOrderRequest req) {
         operationsService.createOrderAtBay(id, req.getCustomerName(), req.getCustomerPhone(),
-                req.getVehiclePlate(), req.getServiceId(), req.getPromoCode());
+                req.getVehiclePlate(), req.getServiceIds(), req.getPromoCode());
         return ResponseEntity.noContent().build();
     }
 

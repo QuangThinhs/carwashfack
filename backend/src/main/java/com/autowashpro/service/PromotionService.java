@@ -51,11 +51,9 @@ public class PromotionService {
 
     /** Khach xem truoc giam gia khi go ma (khong tang luot). Tra ve valid=false + ly do neu khong hop le. */
     @Transactional(readOnly = true)
-    public PromoApplyResponse preview(String username, String code, Long serviceId) {
+    public PromoApplyResponse preview(String username, String code, List<Long> serviceIds) {
         Customer customer = customer(username);
-        ServiceItem service = serviceItemRepository.findById(serviceId)
-                .orElseThrow(() -> new IllegalArgumentException("Dịch vụ không hợp lệ"));
-        long base = service.getPrice();
+        long base = sumServices(serviceIds);
         try {
             Tier tier = loyaltyService.tierOf(customer);
             Promotion p = resolveValid(customer, tier, code);
@@ -72,17 +70,16 @@ public class PromotionService {
         Tier tier = loyaltyService.tierOf(customer);
         Promotion p = resolveValid(customer, tier, code);
         long discount = basePrice * p.getDiscountPercent() / 100;
-        p.setUsageCount(p.getUsageCount() + 1);
-        promotionRepository.save(p);
+        if (promotionRepository.incrementUsage(p.getId()) == 0) {
+            throw new IllegalArgumentException("Mã khuyến mãi đã hết lượt sử dụng");
+        }
         return new AppliedPromo(p, discount, basePrice - discount);
     }
 
     /** Admin xem truoc giam gia cho order khach vang lai (chi ma doi tuong ALL). */
     @Transactional(readOnly = true)
-    public PromoApplyResponse previewForWalkIn(String code, Long serviceId) {
-        ServiceItem service = serviceItemRepository.findById(serviceId)
-                .orElseThrow(() -> new IllegalArgumentException("Dịch vụ không hợp lệ"));
-        long base = service.getPrice();
+    public PromoApplyResponse previewForWalkIn(String code, List<Long> serviceIds) {
+        long base = sumServices(serviceIds);
         try {
             Promotion p = resolveValidWalkIn(code);
             long discount = base * p.getDiscountPercent() / 100;
@@ -97,8 +94,9 @@ public class PromotionService {
     public AppliedPromo applyForWalkIn(String code, long basePrice) {
         Promotion p = resolveValidWalkIn(code);
         long discount = basePrice * p.getDiscountPercent() / 100;
-        p.setUsageCount(p.getUsageCount() + 1);
-        promotionRepository.save(p);
+        if (promotionRepository.incrementUsage(p.getId()) == 0) {
+            throw new IllegalArgumentException("Mã khuyến mãi đã hết lượt sử dụng");
+        }
         return new AppliedPromo(p, discount, basePrice - discount);
     }
 
@@ -165,6 +163,17 @@ public class PromotionService {
     private Customer customer(String username) {
         return customerRepository.findByUserUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy khách hàng"));
+    }
+
+    /** Tong gia cac dich vu duoc chon. */
+    private long sumServices(List<Long> serviceIds) {
+        long base = 0;
+        for (Long sid : serviceIds) {
+            ServiceItem s = serviceItemRepository.findById(sid)
+                    .orElseThrow(() -> new IllegalArgumentException("Dịch vụ không hợp lệ"));
+            base += s.getPrice();
+        }
+        return base;
     }
 
     /** Ket qua ap dung ma cho mot booking. */

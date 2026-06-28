@@ -1,13 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Car, CheckCircle, Play, X, Clock, Settings, Plus, Trash2, Check, Ticket } from "lucide-react";
+import {
+  Car,
+  CheckCircle,
+  Play,
+  X,
+  Clock,
+  Settings,
+  Plus,
+  Trash2,
+  Check,
+  Ticket,
+  Search,
+  Receipt,
+} from "lucide-react";
 import AdminShell from "@/components/AdminShell";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmDialog";
 import {
   getBays,
   getAdminBookings,
+  getAdminCustomers,
   assignBay,
   createBayOrder,
   completeBay,
@@ -17,6 +31,7 @@ import {
   applyAdminPromo,
   type WashBay,
   type AdminBooking,
+  type AdminCustomer,
 } from "@/services/adminOps";
 import { getServices, fmtPrice, fmtTime, type ServiceItem } from "@/services/booking";
 import { type PromoApplyResult } from "@/services/promotion";
@@ -24,7 +39,7 @@ import { type PromoApplyResult } from "@/services/promotion";
 const inputCls =
   "w-full rounded-lg border border-white/10 bg-slate-800 px-4 py-2.5 text-white outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30";
 
-const EMPTY_ORDER = { customerName: "", customerPhone: "", vehiclePlate: "", serviceId: "", promoCode: "" };
+const EMPTY_ORDER = { customerName: "", customerPhone: "", vehiclePlate: "", serviceIds: [] as number[], promoCode: "" };
 
 export default function AdminBaysPage() {
   const toast = useToast();
@@ -32,15 +47,19 @@ export default function AdminBaysPage() {
   const [bays, setBays] = useState<WashBay[]>([]);
   const [waiting, setWaiting] = useState<AdminBooking[]>([]);
   const [services, setServices] = useState<ServiceItem[]>([]);
+  const [customers, setCustomers] = useState<AdminCustomer[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [start, setStart] = useState<WashBay | null>(null);
   const [tab, setTab] = useState<"order" | "online">("order");
   const [order, setOrder] = useState(EMPTY_ORDER);
+  const [custQuery, setCustQuery] = useState("");
   const [promo, setPromo] = useState<PromoApplyResult | null>(null);
   const [promoChecking, setPromoChecking] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
+
+  const [detail, setDetail] = useState<WashBay | null>(null);
 
   const [manageOpen, setManageOpen] = useState(false);
   const [newBayName, setNewBayName] = useState("");
@@ -48,6 +67,7 @@ export default function AdminBaysPage() {
 
   useEffect(() => {
     reload();
+    getAdminCustomers().then(setCustomers).catch(() => setCustomers([]));
   }, []);
 
   function reload() {
@@ -66,15 +86,34 @@ export default function AdminBaysPage() {
     setErr("");
     setTab("order");
     setPromo(null);
-    setOrder({ ...EMPTY_ORDER, serviceId: services[0] ? String(services[0].id) : "" });
+    setCustQuery("");
+    setOrder({ ...EMPTY_ORDER, serviceIds: services[0] ? [services[0].id] : [] });
     setStart(bay);
   }
 
+  function toggleService(id: number) {
+    setOrder((o) => ({
+      ...o,
+      serviceIds: o.serviceIds.includes(id) ? o.serviceIds.filter((x) => x !== id) : [...o.serviceIds, id],
+    }));
+    setPromo(null);
+  }
+
+  function pickCustomer(c: AdminCustomer) {
+    setOrder((o) => ({
+      ...o,
+      customerName: c.fullName,
+      customerPhone: c.phone,
+      vehiclePlate: c.vehicles[0]?.licensePlate ?? o.vehiclePlate,
+    }));
+    setCustQuery("");
+  }
+
   async function handleApplyPromo() {
-    if (!order.promoCode.trim() || !order.serviceId) return;
+    if (!order.promoCode.trim() || order.serviceIds.length === 0) return;
     setPromoChecking(true);
     try {
-      const r = await applyAdminPromo(order.promoCode.trim(), Number(order.serviceId));
+      const r = await applyAdminPromo(order.promoCode.trim(), order.serviceIds);
       setPromo(r);
     } catch {
       setPromo(null);
@@ -87,6 +126,10 @@ export default function AdminBaysPage() {
   async function handleOrder(e: React.FormEvent) {
     e.preventDefault();
     if (!start) return;
+    if (order.serviceIds.length === 0) {
+      setErr("Vui lòng chọn ít nhất một dịch vụ.");
+      return;
+    }
     setSaving(true);
     setErr("");
     try {
@@ -94,7 +137,7 @@ export default function AdminBaysPage() {
         customerName: order.customerName,
         customerPhone: order.customerPhone || undefined,
         vehiclePlate: order.vehiclePlate,
-        serviceId: Number(order.serviceId),
+        serviceIds: order.serviceIds,
         promoCode: promo?.valid ? order.promoCode.trim() : undefined,
       });
       setStart(null);
@@ -133,9 +176,10 @@ export default function AdminBaysPage() {
   }
 
   async function doComplete(bay: WashBay) {
-    if (!(await confirm({ message: `Hoàn tất rửa xe tại ${bay.name}?`, confirmText: "Hoàn tất" }))) return;
+    if (!(await confirm({ message: `Tính tiền & hoàn tất rửa tại ${bay.name}?`, confirmText: "Tính tiền" }))) return;
     try {
       await completeBay(bay.id);
+      setDetail(null);
       toast("Đã hoàn tất.", "success");
       reload();
     } catch (e: any) {
@@ -182,8 +226,20 @@ export default function AdminBaysPage() {
   }
 
   const occupied = bays.filter((b) => b.status === "OCCUPIED").length;
-  const baseTotal = services.find((s) => String(s.id) === order.serviceId)?.price ?? 0;
+  const baseTotal = services.filter((s) => order.serviceIds.includes(s.id)).reduce((sum, s) => sum + s.price, 0);
   const finalTotal = promo?.valid ? promo.finalPrice : baseTotal;
+
+  const q = custQuery.trim().toLowerCase();
+  const custMatches = q
+    ? customers
+        .filter((c) => {
+          const hay = [c.fullName, c.phone, c.email ?? "", ...c.vehicles.map((v) => v.licensePlate)]
+            .join(" ")
+            .toLowerCase();
+          return hay.includes(q);
+        })
+        .slice(0, 6)
+    : [];
 
   return (
     <AdminShell active="bays" title="Quản lý bãi rửa">
@@ -210,8 +266,11 @@ export default function AdminBaysPage() {
               <div
                 key={bay.id}
                 className={`rounded-2xl border p-4 ${
-                  isFree ? "border-white/10 bg-slate-900" : "border-cyan-500/30 bg-cyan-500/[0.06]"
+                  isFree
+                    ? "border-white/10 bg-slate-900"
+                    : "border-cyan-500/30 bg-cyan-500/[0.06] cursor-pointer hover:border-cyan-400/60"
                 }`}
+                onClick={isFree ? undefined : () => setDetail(bay)}
               >
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-white">{bay.name}</span>
@@ -243,12 +302,9 @@ export default function AdminBaysPage() {
                       {bay.serviceName} · {bay.vehiclePlate || "—"}
                     </p>
                     <p className="text-sm font-semibold text-cyan-400 mt-1">{fmtPrice(bay.price)}</p>
-                    <button
-                      onClick={() => doComplete(bay)}
-                      className="mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-green-500/15 text-green-300 hover:bg-green-500 hover:text-white font-medium py-2 text-sm transition"
-                    >
-                      <CheckCircle size={15} /> Hoàn tất
-                    </button>
+                    <p className="mt-2 text-xs text-cyan-300/80 flex items-center gap-1">
+                      <Receipt size={12} /> Bấm để xem & tính tiền
+                    </p>
                   </div>
                 )}
               </div>
@@ -337,6 +393,46 @@ export default function AdminBaysPage() {
                     {err}
                   </div>
                 )}
+
+                {/* Tim khach da dang ky */}
+                <div className="mb-4">
+                  <span className="block text-sm font-medium text-slate-300 mb-1.5">
+                    Tìm khách đã đăng ký (tuỳ chọn)
+                  </span>
+                  <div className="relative">
+                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                    <input
+                      value={custQuery}
+                      onChange={(e) => setCustQuery(e.target.value)}
+                      placeholder="SĐT / biển số / email / tên"
+                      className={`${inputCls} pl-9`}
+                    />
+                  </div>
+                  {custMatches.length > 0 && (
+                    <div className="mt-1 border border-white/10 rounded-lg bg-slate-800 divide-y divide-white/5 overflow-hidden">
+                      {custMatches.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => pickCustomer(c)}
+                          className="w-full text-left px-3 py-2 hover:bg-slate-700 transition"
+                        >
+                          <p className="text-sm text-white">
+                            {c.fullName} · <span className="text-slate-400">{c.phone}</span>
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {c.email || "—"}
+                            {c.vehicles.length > 0 ? ` · ${c.vehicles.map((v) => v.licensePlate).join(", ")}` : ""}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {q && custMatches.length === 0 && (
+                    <p className="text-xs text-slate-500 mt-1">Không tìm thấy khách phù hợp.</p>
+                  )}
+                </div>
+
                 <label className="block mb-4">
                   <span className="block text-sm font-medium text-slate-300 mb-1.5">Tên khách</span>
                   <input
@@ -370,24 +466,37 @@ export default function AdminBaysPage() {
                     />
                   </label>
                 </div>
-                <label className="block mb-4">
-                  <span className="block text-sm font-medium text-slate-300 mb-1.5">Dịch vụ</span>
-                  <select
-                    value={order.serviceId}
-                    onChange={(e) => {
-                      setOrder({ ...order, serviceId: e.target.value });
-                      setPromo(null);
-                    }}
-                    required
-                    className={inputCls}
-                  >
-                    {services.map((s) => (
-                      <option key={s.id} value={s.id} className="bg-slate-800">
-                        {s.name} — {fmtPrice(s.price)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+
+                {/* Dich vu (nhieu) */}
+                <div className="mb-4">
+                  <span className="block text-sm font-medium text-slate-300 mb-1.5">Dịch vụ (chọn 1 hoặc nhiều)</span>
+                  <div className="space-y-1.5">
+                    {services.map((s) => {
+                      const checked = order.serviceIds.includes(s.id);
+                      return (
+                        <label
+                          key={s.id}
+                          className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2 cursor-pointer transition ${
+                            checked
+                              ? "border-cyan-500/50 bg-cyan-500/10"
+                              : "border-white/10 bg-slate-800 hover:bg-slate-700/50"
+                          }`}
+                        >
+                          <span className="flex items-center gap-2.5">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleService(s.id)}
+                              className="w-4 h-4 accent-cyan-500"
+                            />
+                            <span className="text-sm text-white">{s.name}</span>
+                          </span>
+                          <span className="text-sm text-slate-400">{fmtPrice(s.price)}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
 
                 {/* Ma khuyen mai */}
                 <div className="mb-4">
@@ -466,6 +575,87 @@ export default function AdminBaysPage() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal chi tiet bai + tinh tien */}
+      {detail && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+          onClick={() => setDetail(null)}
+        >
+          <div
+            className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-md p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-white">{detail.name} — Chi tiết</h2>
+              <button onClick={() => setDetail(null)} className="text-slate-400 hover:text-white">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between gap-4">
+                <span className="text-slate-400">Khách hàng</span>
+                <span className="text-white font-medium text-right">{detail.customerName || "—"}</span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-slate-400">Số điện thoại</span>
+                <span className="text-slate-200 text-right">{detail.customerPhone || "—"}</span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-slate-400">Biển số xe</span>
+                <span className="text-slate-200 text-right">{detail.vehiclePlate || "—"}</span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-slate-400">Bắt đầu</span>
+                <span className="text-slate-200 text-right">
+                  {detail.scheduledTime ? fmtTime(detail.scheduledTime) : "—"}
+                </span>
+              </div>
+            </div>
+
+            {/* Hoa don */}
+            <div className="mt-4 rounded-lg bg-slate-800/60 border border-white/10 px-4 py-3">
+              <p className="text-xs font-medium text-slate-400 mb-2 flex items-center gap-1.5">
+                <Receipt size={13} /> Dịch vụ
+              </p>
+              <div className="space-y-1.5">
+                {(detail.services ?? []).map((s, i) => (
+                  <div key={i} className="flex justify-between text-sm">
+                    <span className="text-slate-200">{s.name}</span>
+                    <span className="text-slate-400">{fmtPrice(s.price)}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-2 pt-2 border-t border-white/5 space-y-1">
+                {detail.originalPrice != null && detail.originalPrice > detail.price && (
+                  <>
+                    <div className="flex justify-between text-sm text-slate-400">
+                      <span>Tạm tính</span>
+                      <span className="line-through">{fmtPrice(detail.originalPrice)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-green-400">
+                      <span>Giảm{detail.promoCode ? ` (${detail.promoCode})` : ""}</span>
+                      <span>-{fmtPrice(detail.originalPrice - detail.price)}</span>
+                    </div>
+                  </>
+                )}
+                <div className="flex justify-between font-bold text-white">
+                  <span>Tổng tiền</span>
+                  <span className="text-cyan-300">{fmtPrice(detail.price)}</span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => doComplete(detail)}
+              className="mt-5 w-full inline-flex items-center justify-center gap-2 rounded-lg bg-green-500 text-white font-semibold py-2.5 hover:bg-green-400 transition"
+            >
+              <CheckCircle size={17} /> Tính tiền & hoàn tất
+            </button>
           </div>
         </div>
       )}

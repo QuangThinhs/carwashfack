@@ -2,6 +2,7 @@ package com.autowashpro.service;
 
 import com.autowashpro.dto.AdminBookingResponse;
 import com.autowashpro.dto.AdminCustomerResponse;
+import com.autowashpro.dto.ServiceLineResponse;
 import com.autowashpro.dto.VehicleResponse;
 import com.autowashpro.dto.WashBayResponse;
 import com.autowashpro.entity.BayStatus;
@@ -19,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /** Van hanh: quan ly bai rua, lich dat phia admin, va order nhanh tai quay (khach vang lai). */
@@ -123,20 +126,24 @@ public class OperationsService {
     /** Order nhanh tai bai cho khach vang lai: nhap ten/SDT/bien so + chon dich vu -> rua ngay. */
     @Transactional
     public void createOrderAtBay(Long bayId, String customerName, String customerPhone, String vehiclePlate,
-                                 Long serviceId, String promoCode) {
+                                 List<Long> serviceIds, String promoCode) {
         WashBay bay = bay(bayId);
         if (bay.getStatus() != BayStatus.FREE) {
             throw new IllegalArgumentException("Bãi này đang có xe");
         }
-        ServiceItem service = serviceRepo.findById(serviceId)
-                .orElseThrow(() -> new IllegalArgumentException("Dịch vụ không hợp lệ"));
-        long base = service.getPrice();
+        List<ServiceItem> chosen = new ArrayList<>();
+        for (Long sid : serviceIds) {
+            chosen.add(serviceRepo.findById(sid)
+                    .orElseThrow(() -> new IllegalArgumentException("Dịch vụ không hợp lệ")));
+        }
+        long base = chosen.stream().mapToLong(ServiceItem::getPrice).sum();
 
         Booking booking = new Booking();
         booking.setWalkinName(customerName != null ? customerName.trim() : null);
         booking.setWalkinPhone(customerPhone != null && !customerPhone.isBlank() ? customerPhone.trim() : null);
         booking.setWalkinPlate(vehiclePlate != null ? vehiclePlate.trim() : null);
-        booking.setService(service);
+        booking.setService(chosen.get(0));
+        booking.setExtraServices(new LinkedHashSet<>(chosen.subList(1, chosen.size())));
         booking.setScheduledTime(LocalDateTime.now());
         booking.setStatus(BookingStatus.IN_PROGRESS);
 
@@ -164,7 +171,7 @@ public class OperationsService {
         booking.setStatus(BookingStatus.DONE);
         bookingRepo.save(booking);
         if (booking.getCustomer() != null) {
-            loyaltyService.earnForWash(booking.getCustomer(), booking.getPrice(), booking.getService().getName());
+            loyaltyService.earnForWash(booking.getCustomer(), booking.getPrice(), booking.serviceLabel());
         }
         bay.setStatus(BayStatus.FREE);
         bay.setCurrentBooking(null);
@@ -208,12 +215,17 @@ public class OperationsService {
     private WashBayResponse toBay(WashBay bay) {
         Booking b = bay.getCurrentBooking();
         if (b == null) {
-            return new WashBayResponse(bay.getId(), bay.getName(), bay.getStatus().name(), null, null, null, null, 0);
+            return new WashBayResponse(bay.getId(), bay.getName(), bay.getStatus().name());
         }
         boolean walkIn = b.getCustomer() == null;
         String name = walkIn ? b.getWalkinName() : b.getCustomer().getFullName();
+        String phone = walkIn ? b.getWalkinPhone() : b.getCustomer().getPhone();
         String plate = b.getVehicle() != null ? b.getVehicle().getLicensePlate() : b.getWalkinPlate();
+        List<ServiceLineResponse> lines = b.allServices().stream()
+                .map(s -> new ServiceLineResponse(s.getName(), s.getPrice()))
+                .toList();
         return new WashBayResponse(bay.getId(), bay.getName(), bay.getStatus().name(), b.getId(),
-                name, plate, b.getService().getName(), b.getPrice());
+                name, phone, plate, b.serviceLabel(), lines, b.getPrice(), b.getOriginalPrice(),
+                b.getPromotion() != null ? b.getPromotion().getCode() : null, b.getScheduledTime());
     }
 }

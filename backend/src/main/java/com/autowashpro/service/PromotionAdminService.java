@@ -76,6 +76,9 @@ public class PromotionAdminService {
                 customerRepository.findById(cid).ifPresent(c -> p.getTargetCustomers().add(c));
             }
         }
+        if (target == PromotionTarget.USER && p.getTargetCustomers().isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng chọn ít nhất một khách hàng áp dụng");
+        }
 
         p.setStartDate(req.getStartDate());
         p.setEndDate(req.getEndDate());

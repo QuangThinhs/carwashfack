@@ -353,7 +353,12 @@ export default function AdminPromotionsPage() {
                   <span className="block text-sm font-medium text-slate-300 mb-1.5">Đối tượng áp dụng</span>
                   <select
                     value={modal.data.targetType}
-                    onChange={(e) => setData({ targetType: e.target.value })}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setModal((m) =>
+                        m ? { ...m, data: { ...m.data, targetType: v }, targets: v === "USER" ? m.targets : [] } : m,
+                      );
+                    }}
                     className={inputCls}
                   >
                     {TARGET_OPTIONS.map((t) => (

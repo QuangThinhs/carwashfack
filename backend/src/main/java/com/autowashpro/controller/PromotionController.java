@@ -28,6 +28,6 @@ public class PromotionController {
     /** Xem truoc giam gia khi khach go ma khuyen mai. */
     @PostMapping("/apply")
     public PromoApplyResponse apply(Principal principal, @Valid @RequestBody PromoApplyRequest req) {
-        return promotionService.preview(principal.getName(), req.getCode(), req.getServiceId());
+        return promotionService.preview(principal.getName(), req.getCode(), req.getServiceIds());
     }
 }
