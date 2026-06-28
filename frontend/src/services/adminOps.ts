@@ -73,6 +73,29 @@ export async function getBookingHistory(): Promise<AdminBooking[]> {
   return res.data;
 }
 
+/** Admin tạo lịch đặt cho một khách hàng đã đăng ký. */
+export async function createAdminBooking(data: {
+  customerId: number;
+  vehicleId: number;
+  serviceIds: number[];
+  scheduledTime: string;
+  note?: string;
+  promoCode?: string;
+}): Promise<AdminBooking> {
+  const res = await api.post<AdminBooking>("/api/admin/bookings", data);
+  return res.data;
+}
+
+/** Xem trước giảm giá mã cho một khách hàng cụ thể (đủ điều kiện hạng/khách). */
+export async function previewAdminBookingPromo(
+  customerId: number,
+  code: string,
+  serviceIds: number[],
+): Promise<PromoApplyResult> {
+  const res = await api.post<PromoApplyResult>("/api/admin/bookings/preview-promo", { customerId, code, serviceIds });
+  return res.data;
+}
+
 export async function createBay(name: string): Promise<void> {
   await api.post("/api/admin/bays", { name });
 }
