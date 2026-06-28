@@ -30,14 +30,7 @@ public class AdminService {
         long revenue = bookingRepository.sumPriceByStatus(BookingStatus.DONE);
 
         List<AdminBookingResponse> recent = bookingRepository.findTop8ByOrderByIdDesc().stream()
-                .map(b -> new AdminBookingResponse(
-                        b.getId(),
-                        b.getCustomer().getFullName(),
-                        b.getVehicle().getLicensePlate(),
-                        b.getService().getName(),
-                        b.getScheduledTime(),
-                        b.getStatus().name(),
-                        b.getPrice()))
+                .map(AdminBookingResponse::from)
                 .toList();
 
         return new AdminOverviewResponse(totalCustomers, totalBookings, completed, pending, revenue, recent);

@@ -1,21 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Eye, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Eye, X, CheckCircle, XCircle, Wallet } from "lucide-react";
 import AdminShell from "@/components/AdminShell";
-import {
-  getAdminBookings,
-  confirmBooking,
-  cancelBookingAdmin,
-  type AdminBooking,
-} from "@/services/adminOps";
+import { getBookingHistory, type AdminBooking } from "@/services/adminOps";
 import { BOOKING_STATUS, fmtPrice, fmtTime } from "@/services/booking";
 
 const filters = [
   { key: "ALL", label: "Tất cả" },
-  { key: "PENDING", label: "Chờ xác nhận" },
-  { key: "CONFIRMED", label: "Đã xác nhận" },
-  { key: "IN_PROGRESS", label: "Đang rửa" },
+  { key: "DONE", label: "Hoàn tất" },
+  { key: "CANCELLED", label: "Đã huỷ" },
 ];
 
 function StatusBadge({ status }: { status: string }) {
@@ -23,47 +17,49 @@ function StatusBadge({ status }: { status: string }) {
   return <span className={`text-xs font-semibold rounded-full px-2.5 py-0.5 ${st.cls}`}>{st.label}</span>;
 }
 
-export default function AdminBookingsPage() {
+function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="bg-slate-900 border border-white/10 rounded-2xl p-4 flex items-center gap-3">
+      <div className="rounded-xl bg-cyan-500/10 text-cyan-400 p-2.5">{icon}</div>
+      <div>
+        <p className="text-xs text-slate-400">{label}</p>
+        <p className="text-lg font-bold text-white">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+export default function AdminHistoryPage() {
   const [bookings, setBookings] = useState<AdminBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("ALL");
   const [detail, setDetail] = useState<AdminBooking | null>(null);
 
   useEffect(() => {
-    reload();
-  }, []);
-
-  function reload() {
     setLoading(true);
-    getAdminBookings()
+    getBookingHistory()
       .then(setBookings)
       .catch(() => setBookings([]))
       .finally(() => setLoading(false));
-  }
+  }, []);
 
-  async function doConfirm(b: AdminBooking) {
-    try {
-      await confirmBooking(b.id);
-      reload();
-    } catch (err: any) {
-      alert(err?.response?.data?.message || "Thao tác thất bại.");
-    }
-  }
-
-  async function doCancel(b: AdminBooking) {
-    if (!confirm("Huỷ lịch đặt này?")) return;
-    try {
-      await cancelBookingAdmin(b.id);
-      reload();
-    } catch (err: any) {
-      alert(err?.response?.data?.message || "Huỷ thất bại.");
-    }
-  }
+  const stats = useMemo(() => {
+    const done = bookings.filter((b) => b.status === "DONE");
+    const cancelled = bookings.filter((b) => b.status === "CANCELLED");
+    const revenue = done.reduce((s, b) => s + b.price, 0);
+    return { done: done.length, cancelled: cancelled.length, revenue };
+  }, [bookings]);
 
   const shown = filter === "ALL" ? bookings : bookings.filter((b) => b.status === filter);
 
   return (
-    <AdminShell active="bookings" title="Quản lý lịch đặt">
+    <AdminShell active="history" title="Lịch sử đơn hàng">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <StatCard icon={<CheckCircle size={20} />} label="Đơn hoàn tất" value={String(stats.done)} />
+        <StatCard icon={<XCircle size={20} />} label="Đơn đã huỷ" value={String(stats.cancelled)} />
+        <StatCard icon={<Wallet size={20} />} label="Doanh thu" value={fmtPrice(stats.revenue)} />
+      </div>
+
       <div className="flex flex-wrap gap-2 mb-5">
         {filters.map((f) => (
           <button
@@ -84,7 +80,7 @@ export default function AdminBookingsPage() {
         {loading ? (
           <p className="p-5 text-slate-500">Đang tải...</p>
         ) : shown.length === 0 ? (
-          <p className="p-5 text-slate-500">Không có đơn nào đang chờ.</p>
+          <p className="p-5 text-slate-500">Chưa có đơn hàng nào trong lịch sử.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -95,7 +91,7 @@ export default function AdminBookingsPage() {
                   <th className="px-3 py-3 font-medium">Thời gian</th>
                   <th className="px-3 py-3 font-medium">Giá</th>
                   <th className="px-3 py-3 font-medium">Trạng thái</th>
-                  <th className="px-5 py-3 font-medium text-right">Thao tác</th>
+                  <th className="px-5 py-3 font-medium text-right">Chi tiết</th>
                 </tr>
               </thead>
               <tbody>
@@ -119,25 +115,13 @@ export default function AdminBookingsPage() {
                       <StatusBadge status={b.status} />
                     </td>
                     <td className="px-5 py-3.5 text-right">
-                      <div className="inline-flex gap-3 justify-end items-center">
-                        {b.status === "PENDING" && (
-                          <button onClick={() => doConfirm(b)} className="text-xs text-blue-300 hover:underline">
-                            Xác nhận
-                          </button>
-                        )}
-                        {(b.status === "PENDING" || b.status === "CONFIRMED") && (
-                          <button onClick={() => doCancel(b)} className="text-xs text-red-400 hover:underline">
-                            Huỷ
-                          </button>
-                        )}
-                        <button
-                          onClick={() => setDetail(b)}
-                          className="text-slate-500 hover:text-cyan-400 transition"
-                          title="Chi tiết"
-                        >
-                          <Eye size={16} />
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => setDetail(b)}
+                        className="text-slate-500 hover:text-cyan-400 transition"
+                        title="Chi tiết"
+                      >
+                        <Eye size={16} />
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -147,13 +131,7 @@ export default function AdminBookingsPage() {
         )}
       </div>
 
-      <p className="text-xs text-slate-500 mt-3">
-        Đây là các đơn <b className="text-slate-400">đang chờ / đang rửa</b>. Đơn đã hoàn tất hoặc huỷ xem ở{" "}
-        <b className="text-slate-400">Lịch sử đơn hàng</b>. Để xếp xe vào bãi, vào mục{" "}
-        <b className="text-slate-400">Bãi rửa</b>.
-      </p>
-
-      {/* Modal chi tiet lich dat */}
+      {/* Modal chi tiet */}
       {detail && (
         <div
           className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
@@ -164,7 +142,7 @@ export default function AdminBookingsPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-white">Chi tiết lịch đặt #{detail.id}</h2>
+              <h2 className="text-lg font-bold text-white">Chi tiết đơn #{detail.id}</h2>
               <button onClick={() => setDetail(null)} className="text-slate-400 hover:text-white">
                 <X size={20} />
               </button>

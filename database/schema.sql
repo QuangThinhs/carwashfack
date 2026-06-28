@@ -142,14 +142,17 @@ CREATE TABLE promotions (
 -- ---------------------------------------------------------------------
 CREATE TABLE bookings (
     id             BIGINT       NOT NULL AUTO_INCREMENT,
-    customer_id    BIGINT       NOT NULL,
-    vehicle_id     BIGINT       NOT NULL,
+    customer_id    BIGINT       DEFAULT NULL,   -- NULL nếu khách vãng lai
+    vehicle_id     BIGINT       DEFAULT NULL,   -- NULL nếu khách vãng lai
     service_id     BIGINT       NOT NULL,
     scheduled_time DATETIME(6)  NOT NULL,
     status         ENUM('CANCELLED','CONFIRMED','DONE','IN_PROGRESS','PENDING') NOT NULL,
     note           VARCHAR(255) DEFAULT NULL,
     price          BIGINT       NOT NULL,       -- snapshot giá lúc đặt
     created_at     DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    walkin_name    VARCHAR(120) DEFAULT NULL,   -- thông tin khách vãng lai (order tại quầy)
+    walkin_phone   VARCHAR(20)  DEFAULT NULL,
+    walkin_plate   VARCHAR(20)  DEFAULT NULL,
     PRIMARY KEY (id),
     CONSTRAINT fk_booking_customer FOREIGN KEY (customer_id) REFERENCES customers (id),
     CONSTRAINT fk_booking_vehicle  FOREIGN KEY (vehicle_id)  REFERENCES vehicles (id),

@@ -17,9 +17,16 @@ public class AdminBookingController {
         this.operationsService = operationsService;
     }
 
+    /** Lich dat dang hoat dong (cho / da xac nhan / dang rua). */
     @GetMapping
     public List<AdminBookingResponse> list() {
-        return operationsService.listBookings();
+        return operationsService.listActiveBookings();
+    }
+
+    /** Lich su don hang (da hoan tat / da huy). */
+    @GetMapping("/history")
+    public List<AdminBookingResponse> history() {
+        return operationsService.listHistory();
     }
 
     @PostMapping("/{id}/confirm")

@@ -3,11 +3,15 @@ import { api } from "./api";
 export interface AdminBooking {
   id: number;
   customerName: string;
-  vehiclePlate: string;
+  customerPhone: string | null;
+  vehiclePlate: string | null;
+  vehicleInfo: string | null;
   serviceName: string;
   scheduledTime: string;
   status: string;
   price: number;
+  note: string | null;
+  walkIn: boolean;
 }
 
 export interface AdminOverview {

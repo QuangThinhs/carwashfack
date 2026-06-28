@@ -3,7 +3,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, LayoutGrid, CalendarClock, Droplets, Ticket, Users, LogOut } from "lucide-react";
+import { LayoutDashboard, LayoutGrid, CalendarClock, History, Droplets, Ticket, Users, LogOut } from "lucide-react";
 import { getUser, clearAuth, type AuthUser } from "@/lib/auth";
 import Logo from "@/components/Logo";
 
@@ -11,6 +11,7 @@ const navItems = [
   { key: "overview", label: "Tổng quan", Icon: LayoutDashboard, href: "/admin", ready: true },
   { key: "bays", label: "Bãi rửa", Icon: LayoutGrid, href: "/admin/bays", ready: true },
   { key: "bookings", label: "Lịch đặt", Icon: CalendarClock, href: "/admin/bookings", ready: true },
+  { key: "history", label: "Lịch sử đơn hàng", Icon: History, href: "/admin/history", ready: true },
   { key: "services", label: "Dịch vụ", Icon: Droplets, href: "/admin/services", ready: true },
   { key: "promotions", label: "Khuyến mãi", Icon: Ticket, href: "/admin/promotions", ready: true },
   { key: "customers", label: "Khách hàng", Icon: Users, href: "/admin/customers", ready: false },

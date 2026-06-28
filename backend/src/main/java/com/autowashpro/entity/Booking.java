@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
-/** Lich dat rua xe (bang `bookings`). */
+/** Lich dat / order rua xe (bang `bookings`). Khach co tai khoan -> customer/vehicle; khach vang lai -> walkin_*. */
 @Entity
 @Table(name = "bookings")
 public class Booking {
@@ -13,12 +13,14 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** Khach co tai khoan (null neu khach vang lai). */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id", nullable = false)
+    @JoinColumn(name = "customer_id")
     private Customer customer;
 
+    /** Xe da dang ky (null neu khach vang lai). */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "vehicle_id", nullable = false)
+    @JoinColumn(name = "vehicle_id")
     private Vehicle vehicle;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -35,12 +37,21 @@ public class Booking {
     @Column(length = 255)
     private String note;
 
-    /** Snapshot gia dich vu tai thoi diem dat. */
     @Column(nullable = false)
     private long price;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    // ----- Thong tin khach vang lai (khi customer/vehicle null) -----
+    @Column(name = "walkin_name", length = 120)
+    private String walkinName;
+
+    @Column(name = "walkin_phone", length = 20)
+    private String walkinPhone;
+
+    @Column(name = "walkin_plate", length = 20)
+    private String walkinPlate;
 
     @PrePersist
     void onCreate() {
@@ -51,10 +62,6 @@ public class Booking {
 
     public Long getId() {
         return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public Customer getCustomer() {
@@ -117,7 +124,27 @@ public class Booking {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    public String getWalkinName() {
+        return walkinName;
+    }
+
+    public void setWalkinName(String walkinName) {
+        this.walkinName = walkinName;
+    }
+
+    public String getWalkinPhone() {
+        return walkinPhone;
+    }
+
+    public void setWalkinPhone(String walkinPhone) {
+        this.walkinPhone = walkinPhone;
+    }
+
+    public String getWalkinPlate() {
+        return walkinPlate;
+    }
+
+    public void setWalkinPlate(String walkinPlate) {
+        this.walkinPlate = walkinPlate;
     }
 }

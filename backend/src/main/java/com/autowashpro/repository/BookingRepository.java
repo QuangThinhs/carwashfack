@@ -20,4 +20,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     long sumPriceByStatus(BookingStatus status);
 
     List<Booking> findTop8ByOrderByIdDesc();
+
+    List<Booking> findByStatusInOrderByScheduledTimeAsc(List<BookingStatus> statuses);
+
+    List<Booking> findByStatusInOrderByScheduledTimeDesc(List<BookingStatus> statuses);
 }
