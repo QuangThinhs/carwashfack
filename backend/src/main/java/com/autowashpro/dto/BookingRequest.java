@@ -1,21 +1,26 @@
 package com.autowashpro.dto;
 
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class BookingRequest {
 
     @NotNull(message = "Vui lòng chọn xe")
     private Long vehicleId;
 
-    @NotNull(message = "Vui lòng chọn dịch vụ")
-    private Long serviceId;
+    @NotEmpty(message = "Vui lòng chọn ít nhất một dịch vụ")
+    private List<Long> serviceIds;
 
     @NotNull(message = "Vui lòng chọn thời gian")
     private LocalDateTime scheduledTime;
 
     private String note;
+
+    /** Ma khuyen mai (tuy chon). */
+    private String promoCode;
 
     public Long getVehicleId() {
         return vehicleId;
@@ -25,12 +30,12 @@ public class BookingRequest {
         this.vehicleId = vehicleId;
     }
 
-    public Long getServiceId() {
-        return serviceId;
+    public List<Long> getServiceIds() {
+        return serviceIds;
     }
 
-    public void setServiceId(Long serviceId) {
-        this.serviceId = serviceId;
+    public void setServiceIds(List<Long> serviceIds) {
+        this.serviceIds = serviceIds;
     }
 
     public LocalDateTime getScheduledTime() {
@@ -47,5 +52,13 @@ public class BookingRequest {
 
     public void setNote(String note) {
         this.note = note;
+    }
+
+    public String getPromoCode() {
+        return promoCode;
+    }
+
+    public void setPromoCode(String promoCode) {
+        this.promoCode = promoCode;
     }
 }

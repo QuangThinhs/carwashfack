@@ -2,6 +2,7 @@ package com.autowashpro.service;
 
 import com.autowashpro.dto.BookingRequest;
 import com.autowashpro.dto.BookingResponse;
+import com.autowashpro.dto.ServiceLineResponse;
 import com.autowashpro.entity.Booking;
 import com.autowashpro.entity.BookingStatus;
 import com.autowashpro.entity.Customer;
@@ -15,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 @Service
@@ -28,17 +31,20 @@ public class BookingService {
     private final ServiceItemRepository serviceItemRepository;
     private final CustomerRepository customerRepository;
     private final LoyaltyService loyaltyService;
+    private final PromotionService promotionService;
 
     public BookingService(BookingRepository bookingRepository,
                           VehicleRepository vehicleRepository,
                           ServiceItemRepository serviceItemRepository,
                           CustomerRepository customerRepository,
-                          LoyaltyService loyaltyService) {
+                          LoyaltyService loyaltyService,
+                          PromotionService promotionService) {
         this.bookingRepository = bookingRepository;
         this.vehicleRepository = vehicleRepository;
         this.serviceItemRepository = serviceItemRepository;
         this.customerRepository = customerRepository;
         this.loyaltyService = loyaltyService;
+        this.promotionService = promotionService;
     }
 
     @Transactional
@@ -47,8 +53,9 @@ public class BookingService {
 
         Vehicle vehicle = vehicleRepository.findByIdAndCustomerId(req.getVehicleId(), customer.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Xe không hợp lệ"));
-        ServiceItem service = serviceItemRepository.findById(req.getServiceId())
-                .orElseThrow(() -> new IllegalArgumentException("Dịch vụ không hợp lệ"));
+
+        List<ServiceItem> chosen = resolveServices(req.getServiceIds());
+        long base = chosen.stream().mapToLong(ServiceItem::getPrice).sum();
 
         LocalDateTime time = req.getScheduledTime();
         LocalDateTime now = LocalDateTime.now();
@@ -62,11 +69,22 @@ public class BookingService {
         Booking booking = new Booking();
         booking.setCustomer(customer);
         booking.setVehicle(vehicle);
-        booking.setService(service);
+        booking.setService(chosen.get(0));
+        booking.setExtraServices(new LinkedHashSet<>(chosen.subList(1, chosen.size())));
         booking.setScheduledTime(time);
         booking.setStatus(BookingStatus.PENDING);
         booking.setNote(req.getNote());
-        booking.setPrice(service.getPrice());
+
+        String code = req.getPromoCode();
+        if (code != null && !code.isBlank()) {
+            PromotionService.AppliedPromo applied = promotionService.applyForBooking(customer, code, base);
+            booking.setOriginalPrice(base);
+            booking.setPrice(applied.finalPrice());
+            booking.setPromotion(applied.promotion());
+        } else {
+            booking.setPrice(base);
+        }
+
         bookingRepository.save(booking);
         return toResponse(booking);
     }
@@ -91,7 +109,7 @@ public class BookingService {
         booking.setStatus(BookingStatus.DONE);
         bookingRepository.save(booking);
         // Tich diem cho lan rua vua hoan tat
-        loyaltyService.earnForWash(booking.getCustomer(), booking.getPrice(), booking.getService().getName());
+        loyaltyService.earnForWash(booking.getCustomer(), booking.getPrice(), booking.serviceLabel());
         return toResponse(booking);
     }
 
@@ -108,20 +126,35 @@ public class BookingService {
         return toResponse(booking);
     }
 
+    private List<ServiceItem> resolveServices(List<Long> serviceIds) {
+        List<ServiceItem> chosen = new ArrayList<>();
+        for (Long sid : serviceIds) {
+            chosen.add(serviceItemRepository.findById(sid)
+                    .orElseThrow(() -> new IllegalArgumentException("Dịch vụ không hợp lệ")));
+        }
+        return chosen;
+    }
+
     private Customer currentCustomer(String username) {
         return customerRepository.findByUserUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy khách hàng"));
     }
 
     private BookingResponse toResponse(Booking b) {
+        List<ServiceLineResponse> lines = b.allServices().stream()
+                .map(s -> new ServiceLineResponse(s.getName(), s.getPrice()))
+                .toList();
         return new BookingResponse(
                 b.getId(),
                 b.getVehicle().getLicensePlate(),
-                b.getService().getName(),
+                b.serviceLabel(),
+                lines,
                 b.getScheduledTime(),
                 b.getStatus().name(),
                 b.getPrice(),
-                b.getNote()
+                b.getNote(),
+                b.getOriginalPrice(),
+                b.getPromotion() != null ? b.getPromotion().getCode() : null
         );
     }
 }

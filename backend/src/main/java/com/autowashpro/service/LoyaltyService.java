@@ -91,6 +91,14 @@ public class LoyaltyService {
         return getOrCreate(customer(username)).getTier();
     }
 
+    /** Hang hien tai cua khach (khong tao moi tai khoan diem) — dung de kiem tra dieu kien khuyen mai. */
+    @Transactional(readOnly = true)
+    public Tier tierOf(Customer customer) {
+        return loyaltyRepo.findByCustomerId(customer.getId())
+                .map(LoyaltyAccount::getTier)
+                .orElse(Tier.MEMBER);
+    }
+
     private LoyaltyAccount getOrCreate(Customer customer) {
         return loyaltyRepo.findByCustomerId(customer.getId()).orElseGet(() -> {
             LoyaltyAccount a = new LoyaltyAccount();

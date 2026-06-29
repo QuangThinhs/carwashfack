@@ -8,21 +8,30 @@ export interface ServiceItem {
   durationMin: number;
 }
 
+export interface ServiceLine {
+  name: string;
+  price: number;
+}
+
 export interface Booking {
   id: number;
   vehiclePlate: string;
   serviceName: string;
+  services: ServiceLine[];
   scheduledTime: string;
   status: string;
   price: number;
   note: string | null;
+  originalPrice: number | null;
+  promoCode: string | null;
 }
 
 export interface BookingPayload {
   vehicleId: number;
-  serviceId: number;
+  serviceIds: number[];
   scheduledTime: string; // "YYYY-MM-DDTHH:mm"
   note?: string;
+  promoCode?: string;
 }
 
 /** Trạng thái booking đang hoạt động (hiển thị ở trang đặt lịch). */

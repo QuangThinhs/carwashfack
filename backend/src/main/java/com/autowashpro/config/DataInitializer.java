@@ -1,31 +1,71 @@
 package com.autowashpro.config;
 
+import com.autowashpro.entity.BayStatus;
 import com.autowashpro.entity.Promotion;
+import com.autowashpro.entity.PromotionTarget;
+import com.autowashpro.entity.Role;
 import com.autowashpro.entity.ServiceItem;
 import com.autowashpro.entity.Tier;
+import com.autowashpro.entity.User;
+import com.autowashpro.entity.WashBay;
 import com.autowashpro.repository.PromotionRepository;
 import com.autowashpro.repository.ServiceItemRepository;
+import com.autowashpro.repository.UserRepository;
+import com.autowashpro.repository.WashBayRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
-/** Seed danh muc dich vu + khuyen mai mac dinh khi bang con trong. */
+/** Seed admin + bai rua + dich vu + khuyen mai mac dinh khi bang con trong. */
 @Component
 public class DataInitializer implements CommandLineRunner {
 
     private final ServiceItemRepository serviceItemRepository;
     private final PromotionRepository promotionRepository;
+    private final UserRepository userRepository;
+    private final WashBayRepository washBayRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public DataInitializer(ServiceItemRepository serviceItemRepository,
-                           PromotionRepository promotionRepository) {
+                           PromotionRepository promotionRepository,
+                           UserRepository userRepository,
+                           WashBayRepository washBayRepository,
+                           PasswordEncoder passwordEncoder) {
         this.serviceItemRepository = serviceItemRepository;
         this.promotionRepository = promotionRepository;
+        this.userRepository = userRepository;
+        this.washBayRepository = washBayRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     public void run(String... args) {
+        // Tai khoan quan tri mac dinh (username: admin / password: admin123)
+        if (!userRepository.existsByUsername("admin")) {
+            User admin = new User();
+            admin.setUsername("admin");
+            admin.setPasswordHash(passwordEncoder.encode("admin123"));
+            admin.setRole(Role.ADMIN);
+            admin.setEnabled(true);
+            userRepository.save(admin);
+        }
+
+        // 10 bai rua
+        if (washBayRepository.count() == 0) {
+            List<WashBay> bays = new ArrayList<>();
+            for (int i = 1; i <= 10; i++) {
+                WashBay bay = new WashBay();
+                bay.setName("Bãi " + i);
+                bay.setStatus(BayStatus.FREE);
+                bays.add(bay);
+            }
+            washBayRepository.saveAll(bays);
+        }
+
         if (serviceItemRepository.count() == 0) {
             serviceItemRepository.saveAll(List.of(
                     service("Rửa xe cơ bản", "WASH_PACKAGE", 30000, 20),
@@ -66,6 +106,7 @@ public class DataInitializer implements CommandLineRunner {
         p.setDescription(description);
         p.setDiscountPercent(discountPercent);
         p.setMinTier(minTier);
+        p.setTargetType(minTier != null ? PromotionTarget.TIER : PromotionTarget.ALL);
         p.setStartDate(start);
         p.setEndDate(end);
         p.setActive(true);

@@ -14,6 +14,8 @@ import {
 } from "@/services/vehicle";
 import CustomerTopbar from "@/components/CustomerTopbar";
 import Field from "@/components/Field";
+import { useToast } from "@/components/Toast";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 const inputCls =
   "w-full rounded-lg border border-white/10 bg-slate-800 px-4 py-2.5 text-white outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30";
@@ -27,6 +29,8 @@ const EMPTY = { licensePlate: "", category: "Xe máy", brand: "", type: "" };
 
 export default function VehiclesPage() {
   const router = useRouter();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,12 +92,12 @@ export default function VehiclesPage() {
   }
 
   async function handleDelete(v: Vehicle) {
-    if (!confirm(`Xoá xe "${v.licensePlate}"?`)) return;
+    if (!(await confirm({ message: `Xoá xe "${v.licensePlate}"?`, danger: true, confirmText: "Xoá" }))) return;
     try {
       await deleteVehicle(v.id);
       reload();
     } catch {
-      alert("Xoá thất bại, vui lòng thử lại.");
+      toast("Xoá thất bại, vui lòng thử lại.");
     }
   }
 

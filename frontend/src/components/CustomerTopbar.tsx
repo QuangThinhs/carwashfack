@@ -7,9 +7,11 @@ import { Crown, LogOut } from "lucide-react";
 import { clearAuth, type AuthUser } from "@/lib/auth";
 import { getLoyalty } from "@/services/loyalty";
 import Logo from "@/components/Logo";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 export default function CustomerTopbar({ user }: { user: AuthUser }) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [tier, setTier] = useState("Member");
 
   useEffect(() => {
@@ -18,8 +20,8 @@ export default function CustomerTopbar({ user }: { user: AuthUser }) {
       .catch(() => {});
   }, []);
 
-  function handleLogout() {
-    if (!confirm("Bạn có chắc muốn đăng xuất?")) return;
+  async function handleLogout() {
+    if (!(await confirm({ message: "Bạn có chắc muốn đăng xuất?", confirmText: "Đăng xuất" }))) return;
     clearAuth();
     router.push("/login");
   }

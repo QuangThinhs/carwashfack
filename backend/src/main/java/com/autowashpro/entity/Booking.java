@@ -3,8 +3,13 @@ package com.autowashpro.entity;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-/** Lich dat rua xe (bang `bookings`). */
+/** Lich dat / order rua xe (bang `bookings`). Khach co tai khoan -> customer/vehicle; khach vang lai -> walkin_*. */
 @Entity
 @Table(name = "bookings")
 public class Booking {
@@ -13,17 +18,27 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** Khach co tai khoan (null neu khach vang lai). */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id", nullable = false)
+    @JoinColumn(name = "customer_id")
     private Customer customer;
 
+    /** Xe da dang ky (null neu khach vang lai). */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "vehicle_id", nullable = false)
+    @JoinColumn(name = "vehicle_id")
     private Vehicle vehicle;
 
+    /** Dich vu chinh (dich vu dau tien khach chon). */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "service_id", nullable = false)
     private ServiceItem service;
+
+    /** Cac dich vu chon them (ngoai dich vu chinh). */
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "booking_extra_services",
+            joinColumns = @JoinColumn(name = "booking_id"),
+            inverseJoinColumns = @JoinColumn(name = "service_id"))
+    private Set<ServiceItem> extraServices = new LinkedHashSet<>();
 
     @Column(name = "scheduled_time", nullable = false)
     private LocalDateTime scheduledTime;
@@ -35,12 +50,30 @@ public class Booking {
     @Column(length = 255)
     private String note;
 
-    /** Snapshot gia dich vu tai thoi diem dat. */
     @Column(nullable = false)
     private long price;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    // ----- Thong tin khach vang lai (khi customer/vehicle null) -----
+    @Column(name = "walkin_name", length = 120)
+    private String walkinName;
+
+    @Column(name = "walkin_phone", length = 20)
+    private String walkinPhone;
+
+    @Column(name = "walkin_plate", length = 20)
+    private String walkinPlate;
+
+    /** Khuyen mai da ap dung (null neu khong dung ma). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "promotion_id")
+    private Promotion promotion;
+
+    /** Gia goc truoc khi giam (null neu khong dung ma). */
+    @Column(name = "original_price")
+    private Long originalPrice;
 
     @PrePersist
     void onCreate() {
@@ -51,10 +84,6 @@ public class Booking {
 
     public Long getId() {
         return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public Customer getCustomer() {
@@ -79,6 +108,29 @@ public class Booking {
 
     public void setService(ServiceItem service) {
         this.service = service;
+    }
+
+    public Set<ServiceItem> getExtraServices() {
+        return extraServices;
+    }
+
+    public void setExtraServices(Set<ServiceItem> extraServices) {
+        this.extraServices = extraServices;
+    }
+
+    /** Tat ca dich vu cua don: chinh + cac dich vu them. */
+    public List<ServiceItem> allServices() {
+        List<ServiceItem> all = new ArrayList<>();
+        if (service != null) {
+            all.add(service);
+        }
+        all.addAll(extraServices);
+        return all;
+    }
+
+    /** Ten gop cac dich vu, vd "Rửa cơ bản + Đánh bóng". */
+    public String serviceLabel() {
+        return allServices().stream().map(ServiceItem::getName).collect(Collectors.joining(" + "));
     }
 
     public LocalDateTime getScheduledTime() {
@@ -117,7 +169,43 @@ public class Booking {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    public String getWalkinName() {
+        return walkinName;
+    }
+
+    public void setWalkinName(String walkinName) {
+        this.walkinName = walkinName;
+    }
+
+    public String getWalkinPhone() {
+        return walkinPhone;
+    }
+
+    public void setWalkinPhone(String walkinPhone) {
+        this.walkinPhone = walkinPhone;
+    }
+
+    public String getWalkinPlate() {
+        return walkinPlate;
+    }
+
+    public void setWalkinPlate(String walkinPlate) {
+        this.walkinPlate = walkinPlate;
+    }
+
+    public Promotion getPromotion() {
+        return promotion;
+    }
+
+    public void setPromotion(Promotion promotion) {
+        this.promotion = promotion;
+    }
+
+    public Long getOriginalPrice() {
+        return originalPrice;
+    }
+
+    public void setOriginalPrice(Long originalPrice) {
+        this.originalPrice = originalPrice;
     }
 }

@@ -1,198 +1,231 @@
 -- =====================================================================
---  AutoWash Pro - MySQL schema + du lieu mau
---  Chay: mysql -u root -p autowash < database/schema.sql
+--  AutoWash Pro — Hệ thống quản lý bãi rửa xe
+--  MySQL / MariaDB schema (khớp với entity JPA hiện tại)
+--
+--  Cách chạy:
+--     mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS autowash CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;"
+--     mysql -u root -p autowash < database/schema.sql
+--
+--  Lưu ý: Ứng dụng dùng Hibernate ddl-auto=update nên có thể tự tạo bảng.
+--  File này để tham khảo / dựng DB thủ công, đã đồng bộ với code.
 -- =====================================================================
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
+-- Xoá bảng cũ (kể cả các bảng thừa từ thiết kế cũ) để dựng lại sạch
+DROP TABLE IF EXISTS wash_bays;
+DROP TABLE IF EXISTS promotion_customers;
+DROP TABLE IF EXISTS booking_extra_services;
 DROP TABLE IF EXISTS point_transactions;
-DROP TABLE IF EXISTS wash_transactions;
-DROP TABLE IF EXISTS booking_details;
+DROP TABLE IF EXISTS loyalty_accounts;
 DROP TABLE IF EXISTS bookings;
 DROP TABLE IF EXISTS promotions;
-DROP TABLE IF EXISTS loyalty_accounts;
 DROP TABLE IF EXISTS vehicles;
 DROP TABLE IF EXISTS services;
 DROP TABLE IF EXISTS customers;
-DROP TABLE IF EXISTS tiers;
 DROP TABLE IF EXISTS users;
+-- bảng thừa từ schema cũ (nếu tồn tại)
+DROP TABLE IF EXISTS booking_details;
+DROP TABLE IF EXISTS wash_transactions;
+DROP TABLE IF EXISTS tiers;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ---------------------------------------------------------------------
--- 1. users : tai khoan dang nhap + vai tro
+-- 1. users — tài khoản đăng nhập + vai trò
 -- ---------------------------------------------------------------------
 CREATE TABLE users (
-    id            BIGINT AUTO_INCREMENT PRIMARY KEY,
-    username      VARCHAR(100) NOT NULL UNIQUE,
+    id            BIGINT       NOT NULL AUTO_INCREMENT,
+    username      VARCHAR(100) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    role          ENUM('CUSTOMER','STAFF','ADMIN') NOT NULL DEFAULT 'CUSTOMER',
-    enabled       BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    role          ENUM('ADMIN','CUSTOMER','STAFF') NOT NULL,
+    enabled       BIT(1)       NOT NULL DEFAULT b'1',
+    created_at    DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_users_username (username)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- ---------------------------------------------------------------------
--- 2. tiers : 4 hang + quy tac (co the chinh boi admin)
--- ---------------------------------------------------------------------
-CREATE TABLE tiers (
-    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name                VARCHAR(20) NOT NULL UNIQUE,        -- MEMBER, SILVER, GOLD, PLATINUM
-    rank_order          INT NOT NULL,                       -- 1..4 (cao hon = hang cao hon)
-    booking_window_days INT NOT NULL,                       -- so ngay duoc dat truoc (7/10/12/14)
-    priority_weight     INT NOT NULL,                       -- cao = uu tien hang doi
-    point_rate          DECIMAL(5,2) NOT NULL,              -- diem nhan tren moi 1000 VND chi tieu
-    min_spend           DECIMAL(12,2) NOT NULL DEFAULT 0,   -- nguong chi tieu de len hang
-    perks               VARCHAR(255)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- ---------------------------------------------------------------------
--- 3. customers : ho so khach (1-1 voi users)
+-- 2. customers — hồ sơ khách hàng (1-1 với users)
 -- ---------------------------------------------------------------------
 CREATE TABLE customers (
-    id         BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id    BIGINT NOT NULL UNIQUE,
-    full_name  VARCHAR(120) NOT NULL,
-    phone      VARCHAR(20) NOT NULL UNIQUE,
-    email      VARCHAR(120),
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_customer_user FOREIGN KEY (user_id) REFERENCES users(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    id            BIGINT       NOT NULL AUTO_INCREMENT,
+    user_id       BIGINT       NOT NULL,
+    full_name     VARCHAR(120) NOT NULL,
+    phone         VARCHAR(20)  NOT NULL,
+    email         VARCHAR(120) DEFAULT NULL,
+    date_of_birth DATE         DEFAULT NULL,
+    gender        VARCHAR(10)  DEFAULT NULL,
+    address       VARCHAR(255) DEFAULT NULL,
+    created_at    DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_customers_user (user_id),
+    UNIQUE KEY uq_customers_phone (phone),
+    CONSTRAINT fk_customer_user FOREIGN KEY (user_id) REFERENCES users (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- ---------------------------------------------------------------------
--- 4. vehicles : xe may cua khach
+-- 3. vehicles — xe của khách (ô tô / xe máy)
 -- ---------------------------------------------------------------------
 CREATE TABLE vehicles (
-    id            BIGINT AUTO_INCREMENT PRIMARY KEY,
-    customer_id   BIGINT NOT NULL,
+    id            BIGINT      NOT NULL AUTO_INCREMENT,
+    customer_id   BIGINT      NOT NULL,
     license_plate VARCHAR(20) NOT NULL,
-    type          VARCHAR(50),    -- loai / phan khuc xe
-    brand         VARCHAR(50),
-    CONSTRAINT fk_vehicle_customer FOREIGN KEY (customer_id) REFERENCES customers(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    category      VARCHAR(20) DEFAULT NULL,   -- "Xe máy" | "Ô tô"
+    type          VARCHAR(50) DEFAULT NULL,   -- dòng xe: Wave, Vios...
+    brand         VARCHAR(50) DEFAULT NULL,   -- hãng: Honda, Toyota...
+    PRIMARY KEY (id),
+    CONSTRAINT fk_vehicle_customer FOREIGN KEY (customer_id) REFERENCES customers (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- ---------------------------------------------------------------------
--- 5. services : goi rua + dich vu them
+-- 4. services — danh mục dịch vụ (gói rửa + dịch vụ thêm)
 -- ---------------------------------------------------------------------
 CREATE TABLE services (
-    id           BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id           BIGINT       NOT NULL AUTO_INCREMENT,
     name         VARCHAR(120) NOT NULL,
-    category     ENUM('WASH_PACKAGE','ADD_ON') NOT NULL DEFAULT 'WASH_PACKAGE',
-    price        DECIMAL(12,2) NOT NULL,
-    duration_min INT NOT NULL DEFAULT 30,
-    active       BOOLEAN NOT NULL DEFAULT TRUE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    category     VARCHAR(20)  DEFAULT NULL,   -- WASH_PACKAGE | ADD_ON
+    price        BIGINT       NOT NULL,       -- VND
+    duration_min INT          NOT NULL,
+    active       BIT(1)       NOT NULL DEFAULT b'1',
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- ---------------------------------------------------------------------
--- 6. loyalty_accounts : trang thai diem cua moi khach (1-1 customers)
+-- 5. loyalty_accounts — tài khoản điểm thưởng (1-1 với customers)
 -- ---------------------------------------------------------------------
 CREATE TABLE loyalty_accounts (
-    id             BIGINT AUTO_INCREMENT PRIMARY KEY,
-    customer_id    BIGINT NOT NULL UNIQUE,
-    tier_id        BIGINT NOT NULL,
-    points_balance INT NOT NULL DEFAULT 0,
-    lifetime_spend DECIMAL(14,2) NOT NULL DEFAULT 0,
-    visit_count    INT NOT NULL DEFAULT 0,
-    updated_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_loyalty_customer FOREIGN KEY (customer_id) REFERENCES customers(id),
-    CONSTRAINT fk_loyalty_tier     FOREIGN KEY (tier_id)     REFERENCES tiers(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    id             BIGINT      NOT NULL AUTO_INCREMENT,
+    customer_id    BIGINT      NOT NULL,
+    tier           ENUM('GOLD','MEMBER','PLATINUM','SILVER') NOT NULL,
+    points_balance INT         NOT NULL,
+    lifetime_spend BIGINT      NOT NULL,
+    visit_count    INT         NOT NULL,
+    updated_at     DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_loyalty_customer (customer_id),
+    CONSTRAINT fk_loyalty_customer FOREIGN KEY (customer_id) REFERENCES customers (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- ---------------------------------------------------------------------
--- 7. bookings : lich dat
--- ---------------------------------------------------------------------
-CREATE TABLE bookings (
-    id              BIGINT AUTO_INCREMENT PRIMARY KEY,
-    customer_id     BIGINT NOT NULL,
-    vehicle_id      BIGINT NOT NULL,
-    scheduled_time  DATETIME NOT NULL,
-    status          ENUM('PENDING','CONFIRMED','IN_PROGRESS','DONE','CANCELLED') NOT NULL DEFAULT 'PENDING',
-    priority_weight INT NOT NULL DEFAULT 0,   -- snapshot uu tien theo hang luc dat
-    note            VARCHAR(255),
-    created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_booking_customer FOREIGN KEY (customer_id) REFERENCES customers(id),
-    CONSTRAINT fk_booking_vehicle  FOREIGN KEY (vehicle_id)  REFERENCES vehicles(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- ---------------------------------------------------------------------
--- 8. booking_details : cac dich vu trong moi lich dat
--- ---------------------------------------------------------------------
-CREATE TABLE booking_details (
-    id         BIGINT AUTO_INCREMENT PRIMARY KEY,
-    booking_id BIGINT NOT NULL,
-    service_id BIGINT NOT NULL,
-    quantity   INT NOT NULL DEFAULT 1,
-    price      DECIMAL(12,2) NOT NULL,   -- snapshot gia luc dat
-    CONSTRAINT fk_bd_booking FOREIGN KEY (booking_id) REFERENCES bookings(id),
-    CONSTRAINT fk_bd_service FOREIGN KEY (service_id) REFERENCES services(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- ---------------------------------------------------------------------
--- 9. promotions : khuyen mai nham nhom
--- ---------------------------------------------------------------------
-CREATE TABLE promotions (
-    id               BIGINT AUTO_INCREMENT PRIMARY KEY,
-    code             VARCHAR(40) NOT NULL UNIQUE,
-    name             VARCHAR(120) NOT NULL,
-    discount_percent INT NOT NULL DEFAULT 0,
-    min_tier_id      BIGINT,                 -- chi ap dung tu hang nay tro len (NULL = tat ca)
-    start_date       DATE NOT NULL,
-    end_date         DATE NOT NULL,
-    active           BOOLEAN NOT NULL DEFAULT TRUE,
-    CONSTRAINT fk_promo_tier FOREIGN KEY (min_tier_id) REFERENCES tiers(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- ---------------------------------------------------------------------
--- 10. wash_transactions : lan rua hoan tat
--- ---------------------------------------------------------------------
-CREATE TABLE wash_transactions (
-    id              BIGINT AUTO_INCREMENT PRIMARY KEY,
-    booking_id      BIGINT UNIQUE,            -- co the NULL neu khach vang lai
-    customer_id     BIGINT NOT NULL,
-    promotion_id    BIGINT,
-    total_amount    DECIMAL(12,2) NOT NULL,
-    discount_amount DECIMAL(12,2) NOT NULL DEFAULT 0,
-    points_earned   INT NOT NULL DEFAULT 0,
-    points_redeemed INT NOT NULL DEFAULT 0,
-    created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_wash_booking  FOREIGN KEY (booking_id)   REFERENCES bookings(id),
-    CONSTRAINT fk_wash_customer FOREIGN KEY (customer_id)  REFERENCES customers(id),
-    CONSTRAINT fk_wash_promo    FOREIGN KEY (promotion_id) REFERENCES promotions(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- ---------------------------------------------------------------------
--- 11. point_transactions : so diem (tich / doi / het han)
+-- 6. point_transactions — sổ điểm (tích / đổi / hết hạn)
 -- ---------------------------------------------------------------------
 CREATE TABLE point_transactions (
-    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
-    loyalty_account_id  BIGINT NOT NULL,
-    wash_transaction_id BIGINT,
-    type                ENUM('EARN','REDEEM','EXPIRE','ADJUST') NOT NULL,
-    points              INT NOT NULL,        -- duong = cong diem, am = tru diem
-    expires_at          DATETIME,            -- chi dung cho EARN: earned_at + 12 thang
-    created_at          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_pt_loyalty FOREIGN KEY (loyalty_account_id)  REFERENCES loyalty_accounts(id),
-    CONSTRAINT fk_pt_wash    FOREIGN KEY (wash_transaction_id) REFERENCES wash_transactions(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    id                 BIGINT       NOT NULL AUTO_INCREMENT,
+    loyalty_account_id BIGINT       NOT NULL,
+    type               ENUM('ADJUST','EARN','EXPIRE','REDEEM') NOT NULL,
+    points             INT          NOT NULL,   -- dương = cộng, âm = trừ
+    description        VARCHAR(255) DEFAULT NULL,
+    created_at         DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (id),
+    CONSTRAINT fk_point_loyalty FOREIGN KEY (loyalty_account_id) REFERENCES loyalty_accounts (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- ---------------------------------------------------------------------
+-- 7. promotions — khuyến mãi nhắm theo hạng
+-- ---------------------------------------------------------------------
+CREATE TABLE promotions (
+    id               BIGINT       NOT NULL AUTO_INCREMENT,
+    code             VARCHAR(40)  NOT NULL,
+    name             VARCHAR(120) NOT NULL,
+    description      VARCHAR(255) DEFAULT NULL,
+    discount_percent INT          NOT NULL,
+    target_type      ENUM('ALL','TIER','USER') NOT NULL DEFAULT 'ALL', -- đối tượng áp dụng
+    min_tier         ENUM('GOLD','MEMBER','PLATINUM','SILVER') DEFAULT NULL, -- khi target_type = TIER
+    usage_limit      INT          DEFAULT NULL,   -- NULL = không giới hạn lượt dùng
+    usage_count      INT          NOT NULL DEFAULT 0,
+    start_date       DATE         NOT NULL,
+    end_date         DATE         NOT NULL,
+    active           BIT(1)       NOT NULL DEFAULT b'1',
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_promotions_code (code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- ---------------------------------------------------------------------
+-- 8. bookings — lịch đặt rửa xe
+-- ---------------------------------------------------------------------
+CREATE TABLE bookings (
+    id             BIGINT       NOT NULL AUTO_INCREMENT,
+    customer_id    BIGINT       DEFAULT NULL,   -- NULL nếu khách vãng lai
+    vehicle_id     BIGINT       DEFAULT NULL,   -- NULL nếu khách vãng lai
+    service_id     BIGINT       NOT NULL,
+    scheduled_time DATETIME(6)  NOT NULL,
+    status         ENUM('CANCELLED','CONFIRMED','DONE','IN_PROGRESS','PENDING') NOT NULL,
+    note           VARCHAR(255) DEFAULT NULL,
+    price          BIGINT       NOT NULL,       -- snapshot giá lúc đặt
+    created_at     DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    walkin_name    VARCHAR(120) DEFAULT NULL,   -- thông tin khách vãng lai (order tại quầy)
+    walkin_phone   VARCHAR(20)  DEFAULT NULL,
+    walkin_plate   VARCHAR(20)  DEFAULT NULL,
+    promotion_id   BIGINT       DEFAULT NULL,   -- khuyến mãi đã áp dụng (NULL nếu không)
+    original_price BIGINT       DEFAULT NULL,   -- giá gốc trước khi giảm
+    PRIMARY KEY (id),
+    CONSTRAINT fk_booking_customer  FOREIGN KEY (customer_id)  REFERENCES customers (id),
+    CONSTRAINT fk_booking_vehicle   FOREIGN KEY (vehicle_id)   REFERENCES vehicles (id),
+    CONSTRAINT fk_booking_service   FOREIGN KEY (service_id)   REFERENCES services (id),
+    CONSTRAINT fk_booking_promotion FOREIGN KEY (promotion_id) REFERENCES promotions (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- ---------------------------------------------------------------------
+-- 9. wash_bays — BÃI RỬA (lõi vận hành: trống / đang rửa)
+-- ---------------------------------------------------------------------
+CREATE TABLE wash_bays (
+    id                 BIGINT      NOT NULL AUTO_INCREMENT,
+    name               VARCHAR(50) NOT NULL,
+    status             ENUM('FREE','OCCUPIED') NOT NULL,
+    current_booking_id BIGINT      DEFAULT NULL,   -- lịch đang rửa tại bãi (NULL = trống)
+    PRIMARY KEY (id),
+    CONSTRAINT fk_bay_booking FOREIGN KEY (current_booking_id) REFERENCES bookings (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- ---------------------------------------------------------------------
+-- 10. promotion_customers — khách hàng cụ thể được áp dụng KM (target_type = USER)
+-- ---------------------------------------------------------------------
+CREATE TABLE promotion_customers (
+    promotion_id BIGINT NOT NULL,
+    customer_id  BIGINT NOT NULL,
+    PRIMARY KEY (promotion_id, customer_id),
+    CONSTRAINT fk_promocust_promo    FOREIGN KEY (promotion_id) REFERENCES promotions (id),
+    CONSTRAINT fk_promocust_customer FOREIGN KEY (customer_id)  REFERENCES customers (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- ---------------------------------------------------------------------
+-- 11. booking_extra_services — dịch vụ chọn thêm của một đơn (ngoài dịch vụ chính)
+-- ---------------------------------------------------------------------
+CREATE TABLE booking_extra_services (
+    booking_id BIGINT NOT NULL,
+    service_id BIGINT NOT NULL,
+    PRIMARY KEY (booking_id, service_id),
+    CONSTRAINT fk_bes_booking FOREIGN KEY (booking_id) REFERENCES bookings (id),
+    CONSTRAINT fk_bes_service FOREIGN KEY (service_id) REFERENCES services (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 
 -- =====================================================================
---  DU LIEU MAU (seed)
+--  DỮ LIỆU MẪU (seed)
 -- =====================================================================
 
--- 4 hang thanh vien
-INSERT INTO tiers (name, rank_order, booking_window_days, priority_weight, point_rate, min_spend, perks) VALUES
-('MEMBER',   1, 7,  1, 1.00, 0,        'Tich diem co ban'),
-('SILVER',   2, 10, 2, 1.20, 2000000,  'Giam 5% dich vu them'),
-('GOLD',     3, 12, 3, 1.50, 5000000,  'Giam 10%, uu tien hang doi'),
-('PLATINUM', 4, 14, 4, 2.00, 10000000, 'Giam 15%, 1 lan rua mien phi moi thang');
+-- Tài khoản quản trị — đăng nhập: admin / admin123
+INSERT INTO users (username, password_hash, role, enabled) VALUES
+('admin', '$2a$10$V6CyJ9SYm9nUZq7SXltY/OoXhetW6mUPKdFT23..NjpIOZWfb6sX.', 'ADMIN', b'1');
 
--- Dich vu mau
-INSERT INTO services (name, category, price, duration_min) VALUES
-('Rua xe co ban',   'WASH_PACKAGE', 30000, 20),
-('Rua xe cao cap',  'WASH_PACKAGE', 50000, 35),
-('Ve sinh dong co', 'ADD_ON',       40000, 25),
-('Danh bong xe',    'ADD_ON',       60000, 30);
+-- 10 bãi rửa (đều trống lúc khởi tạo)
+INSERT INTO wash_bays (name, status) VALUES
+('Bãi 1','FREE'),('Bãi 2','FREE'),('Bãi 3','FREE'),('Bãi 4','FREE'),('Bãi 5','FREE'),
+('Bãi 6','FREE'),('Bãi 7','FREE'),('Bãi 8','FREE'),('Bãi 9','FREE'),('Bãi 10','FREE');
 
--- Tai khoan admin mau (LUU Y: thay password_hash bang bcrypt that khi chay backend)
--- Vi du mat khau "admin123" -> hash bang BCrypt truoc khi dung.
--- INSERT INTO users (username, password_hash, role) VALUES ('admin', '<bcrypt-hash>', 'ADMIN');
+-- Danh mục dịch vụ
+INSERT INTO services (name, category, price, duration_min, active) VALUES
+('Rửa xe cơ bản',   'WASH_PACKAGE', 30000, 20, b'1'),
+('Rửa xe cao cấp',  'WASH_PACKAGE', 50000, 35, b'1'),
+('Vệ sinh động cơ', 'ADD_ON',       40000, 25, b'1'),
+('Đánh bóng xe',    'ADD_ON',       60000, 30, b'1');
+
+-- Khuyến mãi
+INSERT INTO promotions (code, name, description, discount_percent, target_type, min_tier, start_date, end_date, active) VALUES
+('WELCOME10',  'Chào mừng thành viên mới', 'Giảm 10% cho lần rửa đầu tiên của bạn.',          10, 'ALL',  NULL,       CURDATE() - INTERVAL 1 DAY, CURDATE() + INTERVAL 6 MONTH, b'1'),
+('WEEKEND12',  'Cuối tuần rạng rỡ',        'Giảm 12% cho mọi dịch vụ vào cuối tuần.',          12, 'ALL',  NULL,       CURDATE() - INTERVAL 1 DAY, CURDATE() + INTERVAL 6 MONTH, b'1'),
+('SILVER15',   'Ưu đãi hạng Silver+',      'Giảm 15% dành riêng cho hạng Silver trở lên.',     15, 'TIER', 'SILVER',   CURDATE() - INTERVAL 1 DAY, CURDATE() + INTERVAL 6 MONTH, b'1'),
+('GOLD20',     'Đặc quyền hạng Gold+',     'Giảm 20% dành riêng cho hạng Gold trở lên.',       20, 'TIER', 'GOLD',     CURDATE() - INTERVAL 1 DAY, CURDATE() + INTERVAL 6 MONTH, b'1'),
+('PLATINUM25', 'Tri ân hạng Platinum',     'Giảm 25% cùng nhiều quà tặng cho hạng Platinum.',  25, 'TIER', 'PLATINUM', CURDATE() - INTERVAL 1 DAY, CURDATE() + INTERVAL 6 MONTH, b'1');
