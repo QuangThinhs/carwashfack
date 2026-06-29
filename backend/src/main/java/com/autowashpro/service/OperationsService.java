@@ -8,7 +8,9 @@ import com.autowashpro.dto.WashBayResponse;
 import com.autowashpro.entity.BayStatus;
 import com.autowashpro.entity.Booking;
 import com.autowashpro.entity.BookingStatus;
+import com.autowashpro.entity.Customer;
 import com.autowashpro.entity.ServiceItem;
+import com.autowashpro.entity.Vehicle;
 import com.autowashpro.entity.WashBay;
 import com.autowashpro.repository.BookingRepository;
 import com.autowashpro.repository.CustomerRepository;
@@ -158,6 +160,46 @@ public class OperationsService {
 
         bookingRepo.save(booking);
         occupy(bay, booking);
+    }
+
+    /** Admin tao lich dat (CONFIRMED) cho mot khach da dang ky. */
+    @Transactional
+    public AdminBookingResponse createBookingForCustomer(Long customerId, Long vehicleId, List<Long> serviceIds,
+                                                         LocalDateTime scheduledTime, String note, String promoCode) {
+        Customer customer = customerRepo.findById(customerId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy khách hàng"));
+        Vehicle vehicle = vehicleRepo.findByIdAndCustomerId(vehicleId, customerId)
+                .orElseThrow(() -> new IllegalArgumentException("Xe không thuộc khách hàng này"));
+        if (scheduledTime == null || scheduledTime.isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Thời gian đặt lịch phải ở tương lai");
+        }
+        List<ServiceItem> chosen = new ArrayList<>();
+        for (Long sid : serviceIds) {
+            chosen.add(serviceRepo.findById(sid)
+                    .orElseThrow(() -> new IllegalArgumentException("Dịch vụ không hợp lệ")));
+        }
+        long base = chosen.stream().mapToLong(ServiceItem::getPrice).sum();
+
+        Booking booking = new Booking();
+        booking.setCustomer(customer);
+        booking.setVehicle(vehicle);
+        booking.setService(chosen.get(0));
+        booking.setExtraServices(new LinkedHashSet<>(chosen.subList(1, chosen.size())));
+        booking.setScheduledTime(scheduledTime);
+        booking.setStatus(BookingStatus.CONFIRMED);
+        booking.setNote(note);
+
+        if (promoCode != null && !promoCode.isBlank()) {
+            PromotionService.AppliedPromo applied = promotionService.applyForBooking(customer, promoCode, base);
+            booking.setOriginalPrice(base);
+            booking.setPrice(applied.finalPrice());
+            booking.setPromotion(applied.promotion());
+        } else {
+            booking.setPrice(base);
+        }
+
+        bookingRepo.save(booking);
+        return AdminBookingResponse.from(booking);
     }
 
     /** Hoan tat rua tai bai -> lich DONE, tich diem (neu la khach co tai khoan), giai phong bai. */

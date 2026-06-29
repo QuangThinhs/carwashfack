@@ -1,7 +1,12 @@
 package com.autowashpro.controller;
 
+import com.autowashpro.dto.AdminBookingRequest;
 import com.autowashpro.dto.AdminBookingResponse;
+import com.autowashpro.dto.AdminPromoPreviewRequest;
+import com.autowashpro.dto.PromoApplyResponse;
 import com.autowashpro.service.OperationsService;
+import com.autowashpro.service.PromotionService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,9 +17,11 @@ import java.util.List;
 public class AdminBookingController {
 
     private final OperationsService operationsService;
+    private final PromotionService promotionService;
 
-    public AdminBookingController(OperationsService operationsService) {
+    public AdminBookingController(OperationsService operationsService, PromotionService promotionService) {
         this.operationsService = operationsService;
+        this.promotionService = promotionService;
     }
 
     /** Lich dat dang hoat dong (cho / da xac nhan / dang rua). */
@@ -27,6 +34,19 @@ public class AdminBookingController {
     @GetMapping("/history")
     public List<AdminBookingResponse> history() {
         return operationsService.listHistory();
+    }
+
+    /** Admin tao lich dat cho mot khach hang da dang ky. */
+    @PostMapping
+    public AdminBookingResponse create(@Valid @RequestBody AdminBookingRequest req) {
+        return operationsService.createBookingForCustomer(req.getCustomerId(), req.getVehicleId(),
+                req.getServiceIds(), req.getScheduledTime(), req.getNote(), req.getPromoCode());
+    }
+
+    /** Xem truoc giam gia cho lich dat cua mot khach cu the. */
+    @PostMapping("/preview-promo")
+    public PromoApplyResponse previewPromo(@Valid @RequestBody AdminPromoPreviewRequest req) {
+        return promotionService.previewForCustomer(req.getCustomerId(), req.getCode(), req.getServiceIds());
     }
 
     @PostMapping("/{id}/confirm")

@@ -76,6 +76,22 @@ public class PromotionService {
         return new AppliedPromo(p, discount, basePrice - discount);
     }
 
+    /** Admin xem truoc giam gia cho mot khach hang cu the (day du dieu kien hang/user). */
+    @Transactional(readOnly = true)
+    public PromoApplyResponse previewForCustomer(Long customerId, String code, List<Long> serviceIds) {
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy khách hàng"));
+        long base = sumServices(serviceIds);
+        try {
+            Tier tier = loyaltyService.tierOf(customer);
+            Promotion p = resolveValid(customer, tier, code);
+            long discount = base * p.getDiscountPercent() / 100;
+            return PromoApplyResponse.ok(p.getCode(), p.getName(), p.getDiscountPercent(), base, discount, base - discount);
+        } catch (IllegalArgumentException e) {
+            return PromoApplyResponse.fail(base, e.getMessage());
+        }
+    }
+
     /** Admin xem truoc giam gia cho order khach vang lai (chi ma doi tuong ALL). */
     @Transactional(readOnly = true)
     public PromoApplyResponse previewForWalkIn(String code, List<Long> serviceIds) {
